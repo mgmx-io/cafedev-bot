@@ -4,6 +4,7 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
+		"dev": "bun run --hot src/index.ts",
 		"lint": "biome check",
 		"format": "biome check --write",
 		"typecheck": "tsc --noEmit"
@@ -14,5 +15,8 @@
 	},
 	"peerDependencies": {
 		"typescript": "^5"
+	},
+	"dependencies": {
+		"hono": "^4.12.27"
 	}
 }

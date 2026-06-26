@@ -5,3 +5,4 @@ function required(name: string): string {
 }
 
 export const DB_PATH = required("DB_PATH");
+export const PORT = Number(required("PORT"));

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Vincular cuenta</title>
+	</head>
+	<body>
+		<button type="button" id="confirm">Confirmar vinculación</button>
+		<p id="msg"></p>
+		<script>
+			document.getElementById("confirm").addEventListener("click", async () => {
+				const res = await fetch(location.pathname, { method: "POST" });
+				const data = await res.json();
+				document.getElementById("msg").textContent = data.linked
+					? "¡Vinculado! Volvé al chat."
+					: "Link inválido o vencido.";
+			});
+		</script>
+	</body>
+</html>

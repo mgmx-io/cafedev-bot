@@ -1,3 +1,0 @@
-CREATE TABLE users (
-  uid TEXT PRIMARY KEY
-);

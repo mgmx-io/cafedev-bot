@@ -3,3 +3,4 @@ import { DB_PATH } from "./env";
 
 export const db = new Database(DB_PATH);
 db.run("PRAGMA journal_mode = WAL");
+db.run("PRAGMA foreign_keys = ON");

@@ -5,6 +5,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "bun run --hot src/index.ts",
+		"cli": "bun run src/channels/cli/index.ts",
 		"lint": "biome check",
 		"format": "biome check --write",
 		"typecheck": "tsc --noEmit"

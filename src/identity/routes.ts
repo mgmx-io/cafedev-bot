@@ -14,12 +14,17 @@ identity.on(["POST", "GET"], "/auth/*", (c) => auth.handler(c.req.raw));
 identity.get("/link/:token", async (c) => {
 	const session = await auth.api.getSession({ headers: c.req.raw.headers });
 	if (!session) {
-		// no session → bounce straight to Google, come back here once logged in
-		const res = await auth.api.signInSocial({
+		// no session → bounce to Google. Forward Better Auth's Set-Cookie (the
+		// signed state cookie) onto our redirect, else the callback fails state check.
+		const { headers, response } = await auth.api.signInSocial({
 			body: { provider: "google", callbackURL: c.req.url },
+			returnHeaders: true,
 		});
-		if (!res.url) return c.text("No se pudo iniciar el login", 500);
-		return c.redirect(res.url);
+		if (!response.url) return c.text("No se pudo iniciar el login", 500);
+		for (const cookie of headers.getSetCookie()) {
+			c.header("set-cookie", cookie, { append: true });
+		}
+		return c.redirect(response.url);
 	}
 	// logged in → serve the confirm page; binding happens on POST (prefetch-safe)
 	return c.html(confirmPage);

@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { db } from "../src/lib/db";
+import { db } from "@/lib/db";
 
 const MIGRATIONS = import.meta.dir + "/../migrations";
 

@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { db } from "@/lib/db";
 
-const MIGRATIONS = import.meta.dir + "/../migrations";
+const MIGRATIONS = `${import.meta.dir}/../migrations`;
 
 db.run(`CREATE TABLE IF NOT EXISTS _migrations (
   name       TEXT PRIMARY KEY,
@@ -9,19 +9,24 @@ db.run(`CREATE TABLE IF NOT EXISTS _migrations (
 )`);
 
 const done = new Set(
-  db.query<{ name: string }, []>("SELECT name FROM _migrations").all().map((r) => r.name),
+	db
+		.query<{ name: string }, []>("SELECT name FROM _migrations")
+		.all()
+		.map((r) => r.name),
 );
 const insert = db.query("INSERT INTO _migrations (name) VALUES (?)");
 
 const apply = db.transaction((file: string) => {
-  db.run(readFileSync(`${MIGRATIONS}/${file}`, "utf8"));
-  insert.run(file);
+	db.run(readFileSync(`${MIGRATIONS}/${file}`, "utf8"));
+	insert.run(file);
 });
 
-const files = readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort();
+const files = readdirSync(MIGRATIONS)
+	.filter((f) => f.endsWith(".sql"))
+	.sort();
 for (const file of files) {
-  if (done.has(file)) continue;
-  apply(file);
-  console.log("applied", file);
+	if (done.has(file)) continue;
+	apply(file);
+	console.log("applied", file);
 }
 console.log(`migrations up to date (${files.length})`);

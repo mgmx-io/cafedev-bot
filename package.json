@@ -1,12 +1,17 @@
 {
-  "name": "career-agent",
-  "module": "src/index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+	"name": "career-agent",
+	"module": "src/index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"lint": "biome check",
+		"format": "biome check --write"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.1",
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
 }

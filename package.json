@@ -17,6 +17,7 @@
 		"typescript": "^5"
 	},
 	"dependencies": {
+		"better-auth": "^1.6.22",
 		"hono": "^4.12.27"
 	}
 }

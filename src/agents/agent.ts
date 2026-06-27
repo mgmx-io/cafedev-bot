@@ -6,7 +6,9 @@ const agent = new ToolLoopAgent({
 		"You are the career agent. You help users with career advice, job search, and professional development.",
 });
 
-export async function run(messages: ModelMessage[]): Promise<string> {
-	const { text } = await agent.generate({ messages });
-	return text;
+export async function run(
+	messages: ModelMessage[],
+): Promise<{ text: string; responseMessages: ModelMessage[] }> {
+	const { text, responseMessages } = await agent.generate({ messages });
+	return { text, responseMessages };
 }

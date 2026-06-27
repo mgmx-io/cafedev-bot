@@ -1,4 +1,6 @@
+import type { ModelMessage } from "ai";
 import { run } from "@/agents/agent";
+import { loadContext, saveContext } from "@/chat/context";
 import { resolveIdentity, startLink } from "@/identity/service";
 import { BETTER_AUTH_URL } from "@/lib/env";
 
@@ -13,6 +15,9 @@ export async function handleIncoming(msg: {
 		const token = startLink(channel, channelUserId);
 		return { text: `Vinculá tu cuenta: ${BETTER_AUTH_URL}/api/link/${token}` };
 	}
-	const text = await run([{ role: "user", content }]);
+	const ctx = loadContext(channel, channelUserId);
+	const userMsg: ModelMessage = { role: "user", content };
+	const { text, responseMessages } = await run([...ctx, userMsg]);
+	saveContext(channel, channelUserId, [...ctx, userMsg, ...responseMessages]);
 	return { text };
 }

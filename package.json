@@ -18,6 +18,7 @@
 		"typescript": "^5"
 	},
 	"dependencies": {
+		"ai": "^7.0.2",
 		"better-auth": "^1.6.22",
 		"hono": "^4.12.27"
 	}

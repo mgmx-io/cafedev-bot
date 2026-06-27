@@ -1,3 +1,4 @@
+import { run } from "@/agents/agent";
 import { resolveIdentity, startLink } from "@/identity/service";
 import { BETTER_AUTH_URL } from "@/lib/env";
 
@@ -15,5 +16,6 @@ export async function handleIncoming(
 		const token = startLink(msg.channel, msg.channelUserId);
 		return { text: `Vinculá tu cuenta: ${BETTER_AUTH_URL}/api/link/${token}` };
 	}
-	return { text: "Ya estás vinculado 👍" }; // TODO: route to the agent
+	const text = await run([{ role: "user", content: msg.text }]);
+	return { text };
 }

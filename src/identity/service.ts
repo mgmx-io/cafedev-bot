@@ -2,11 +2,14 @@ import { db } from "@/lib/db";
 
 const TTL_MS = 15 * 60 * 1000; // magic link lives 15 min
 
+/** A user as seen on a channel — the identity of one channel thread. */
+export type Sender = { channel: string; channelUserId: string };
+
 /** Resolve a channel identity to a user id, or null if not linked yet. */
-export function resolveIdentity(
-	channel: string,
-	channelUserId: string,
-): string | null {
+export function resolveIdentity({
+	channel,
+	channelUserId,
+}: Sender): string | null {
 	const row = db
 		.query<{ user_id: string }, [string, string]>(
 			"SELECT user_id FROM channel_links WHERE channel = ? AND channel_user_id = ?",
@@ -16,7 +19,7 @@ export function resolveIdentity(
 }
 
 /** Create a one-shot link token for an unknown channel identity. */
-export function startLink(channel: string, channelUserId: string): string {
+export function startLink({ channel, channelUserId }: Sender): string {
 	const token = crypto.randomUUID();
 	const expiresAt = new Date(Date.now() + TTL_MS).toISOString();
 	db.transaction(() => {

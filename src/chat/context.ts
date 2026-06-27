@@ -1,13 +1,11 @@
 import type { ModelMessage } from "ai";
+import type { Sender } from "@/identity/service";
 import { db } from "@/lib/db";
 
 const WINDOW = 20; // ponytail: solo contexto; el canal tiene el historial real. Ventana por tokens si desborda.
 
 /** Conversation context for one channel thread. Empty if none yet. */
-export function loadContext(
-	channel: string,
-	channelUserId: string,
-): ModelMessage[] {
+export function loadContext({ channel, channelUserId }: Sender): ModelMessage[] {
 	const row = db
 		.query<{ messages: string }, [string, string]>(
 			"SELECT messages FROM conversation_context WHERE channel = ? AND channel_user_id = ?",
@@ -18,8 +16,7 @@ export function loadContext(
 
 /** Overwrite the thread's context, trimmed to the last WINDOW messages. */
 export function saveContext(
-	channel: string,
-	channelUserId: string,
+	{ channel, channelUserId }: Sender,
 	messages: ModelMessage[],
 ): void {
 	db.run(

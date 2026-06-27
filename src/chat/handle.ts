@@ -1,23 +1,36 @@
 import type { ModelMessage } from "ai";
 import { run } from "@/agents/agent";
 import { loadContext, saveContext } from "@/chat/context";
-import { resolveIdentity, startLink } from "@/identity/service";
+import { resolveIdentity, type Sender, startLink } from "@/identity/service";
 import { BETTER_AUTH_URL } from "@/lib/env";
 
-export async function handleIncoming(msg: {
-	content: string;
-	channel: string;
-	channelUserId: string;
-}): Promise<{ text: string }> {
-	const { content, channel, channelUserId } = msg;
-	const userId = resolveIdentity(channel, channelUserId);
-	if (!userId) {
-		const token = startLink(channel, channelUserId);
-		return { text: `Vinculá tu cuenta: ${BETTER_AUTH_URL}/api/link/${token}` };
+class Conversation {
+	constructor(private sender: Sender) {}
+
+	async handle(content: string): Promise<{ text: string }> {
+		const userId = resolveIdentity(this.sender);
+		if (!userId) return { text: this.linkPrompt() };
+		return { text: await this.chat(content) };
 	}
-	const ctx = loadContext(channel, channelUserId);
-	const userMsg: ModelMessage = { role: "user", content };
-	const { text, responseMessages } = await run([...ctx, userMsg]);
-	saveContext(channel, channelUserId, [...ctx, userMsg, ...responseMessages]);
-	return { text };
+
+	private linkPrompt(): string {
+		const token = startLink(this.sender);
+		return `Vinculá tu cuenta: ${BETTER_AUTH_URL}/api/link/${token}`;
+	}
+
+	// ponytail: read-modify-write sin lock; ok con canales secuenciales (CLI).
+	// Lock o cola por sender cuando telegram procese updates concurrentes.
+	private async chat(content: string): Promise<string> {
+		const userMsg: ModelMessage = { role: "user", content };
+		const history = [...loadContext(this.sender), userMsg];
+		const { text, responseMessages } = await run(history);
+		saveContext(this.sender, [...history, ...responseMessages]);
+		return text;
+	}
+}
+
+export function handleIncoming(
+	msg: Sender & { content: string },
+): Promise<{ text: string }> {
+	return new Conversation(msg).handle(msg.content);
 }

@@ -2,7 +2,7 @@ import type { ModelMessage } from "ai";
 import type { Sender } from "@/identity/service";
 import { db } from "@/lib/db";
 
-const WINDOW = 20; // ponytail: solo contexto; el canal tiene el historial real. Ventana por tokens si desborda.
+const MAX_TURNS = 10; // ponytail: últimos N intercambios; el canal tiene el historial real. Ventana por tokens si desborda.
 
 /** Conversation context for one channel thread. Empty if none yet. */
 export function loadContext({
@@ -17,7 +17,23 @@ export function loadContext({
 	return row ? JSON.parse(row.messages) : [];
 }
 
-/** Overwrite the thread's context, trimmed to the last WINDOW messages. */
+/** Group messages into turns: each starts at a user message and holds the assistant/tool replies until the next. */
+function toTurns(messages: ModelMessage[]): ModelMessage[][] {
+	const turns: ModelMessage[][] = [];
+	for (const m of messages) {
+		if (m.role === "user" || turns.length === 0) turns.push([m]);
+		else turns[turns.length - 1].push(m);
+	}
+	return turns;
+}
+
+/** Keep the last `maxTurns` turns. Cutting on a turn boundary (a user message) never orphans a tool result → no 400. */
+export const trimToTurns = (
+	messages: ModelMessage[],
+	maxTurns: number,
+): ModelMessage[] => toTurns(messages).slice(-maxTurns).flat();
+
+/** Overwrite the thread's context, trimmed to the last MAX_TURNS turns. */
 export function saveContext(
 	{ channel, channelUserId }: Sender,
 	messages: ModelMessage[],
@@ -25,6 +41,6 @@ export function saveContext(
 	db.run(
 		`INSERT INTO conversation_context (channel, channel_user_id, messages) VALUES (?, ?, ?)
 		 ON CONFLICT (channel, channel_user_id) DO UPDATE SET messages = excluded.messages`,
-		[channel, channelUserId, JSON.stringify(messages.slice(-WINDOW))],
+		[channel, channelUserId, JSON.stringify(trimToTurns(messages, MAX_TURNS))],
 	);
 }

@@ -8,7 +8,11 @@ export const removeProfileNote = (userId: string) =>
 		description:
 			"Remove a profile note that is now outdated or contradicted by something newer. Use the note's id.",
 		inputSchema: z.object({
-			id: z.string().describe("The id of the note to remove."),
+			id: z.coerce
+				.number()
+				.int()
+				.positive()
+				.describe("The id of the note to remove."),
 		}),
 		execute: ({ id }) => ({ removed: removeNote(userId, id) }),
 	});

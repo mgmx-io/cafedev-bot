@@ -5,7 +5,7 @@ for await (const line of console) {
 	const { text } = await handleIncoming({
 		channel: "cli",
 		channelUserId: "local",
-		text: line,
+		content: line,
 	});
 	console.log(text);
 }

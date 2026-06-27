@@ -2,20 +2,17 @@ import { run } from "@/agents/agent";
 import { resolveIdentity, startLink } from "@/identity/service";
 import { BETTER_AUTH_URL } from "@/lib/env";
 
-export interface IncomingMessage {
+export async function handleIncoming(msg: {
+	content: string;
 	channel: string;
 	channelUserId: string;
-	text: string;
-}
-
-export async function handleIncoming(
-	msg: IncomingMessage,
-): Promise<{ text: string }> {
-	const userId = resolveIdentity(msg.channel, msg.channelUserId);
+}): Promise<{ text: string }> {
+	const { content, channel, channelUserId } = msg;
+	const userId = resolveIdentity(channel, channelUserId);
 	if (!userId) {
-		const token = startLink(msg.channel, msg.channelUserId);
+		const token = startLink(channel, channelUserId);
 		return { text: `Vinculá tu cuenta: ${BETTER_AUTH_URL}/api/link/${token}` };
 	}
-	const text = await run([{ role: "user", content: msg.text }]);
+	const text = await run([{ role: "user", content }]);
 	return { text };
 }

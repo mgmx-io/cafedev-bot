@@ -5,7 +5,10 @@ import { db } from "@/lib/db";
 const WINDOW = 20; // ponytail: solo contexto; el canal tiene el historial real. Ventana por tokens si desborda.
 
 /** Conversation context for one channel thread. Empty if none yet. */
-export function loadContext({ channel, channelUserId }: Sender): ModelMessage[] {
+export function loadContext({
+	channel,
+	channelUserId,
+}: Sender): ModelMessage[] {
 	const row = db
 		.query<{ messages: string }, [string, string]>(
 			"SELECT messages FROM conversation_context WHERE channel = ? AND channel_user_id = ?",

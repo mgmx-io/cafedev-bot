@@ -10,7 +10,7 @@ class Conversation {
 	async handle(content: string): Promise<{ text: string }> {
 		const userId = resolveIdentity(this.sender);
 		if (!userId) return { text: this.linkPrompt() };
-		return { text: await this.chat(content) };
+		return { text: await this.chat(content, userId) };
 	}
 
 	private linkPrompt(): string {
@@ -20,10 +20,10 @@ class Conversation {
 
 	// ponytail: read-modify-write sin lock; ok con canales secuenciales (CLI).
 	// Lock o cola por sender cuando telegram procese updates concurrentes.
-	private async chat(content: string): Promise<string> {
+	private async chat(content: string, userId: string): Promise<string> {
 		const userMsg: ModelMessage = { role: "user", content };
 		const history = [...loadContext(this.sender), userMsg];
-		const { text, responseMessages } = await run(history);
+		const { text, responseMessages } = await run(history, userId);
 		saveContext(this.sender, [...history, ...responseMessages]);
 		return text;
 	}

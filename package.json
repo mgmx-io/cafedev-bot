@@ -5,14 +5,15 @@
 	"private": true,
 	"scripts": {
 		"dev": "bun run --hot src/index.ts",
-		"cli": "bun run src/channels/cli/index.ts",
+		"cli": "bun run src/channels/cli/index.tsx",
 		"lint": "biome check",
 		"format": "biome check --write",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.1",
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"@types/react": "^19.2.17"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
@@ -21,6 +22,8 @@
 		"ai": "^7.0.2",
 		"better-auth": "^1.6.22",
 		"hono": "^4.12.27",
+		"ink": "^7.1.0",
+		"react": "^19.2.7",
 		"zod": "^4.4.3"
 	}
 }

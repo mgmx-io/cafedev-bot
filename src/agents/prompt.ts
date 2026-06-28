@@ -1,33 +1,15 @@
-import { listSkills } from "@/agents/skills";
-import { listNoteIndex } from "@/profile/notes";
+import { profilePrompt } from "@/profile/prompt";
+import { skillsPrompt } from "@/skills/prompt";
 
 const PERSONA =
 	"You are the career agent. You help users with career advice, job search, and professional development.";
 
-// ponytail: solo el índice de summaries va al prompt; el detalle se trae con recall_profile_notes.
-function profileIndex(userId: string): string {
-	const notes = listNoteIndex(userId);
-	if (!notes.length)
-		return "You know nothing about this user yet — ask questions to build their profile.";
-	const lines = notes
-		.map((n) => `- [${n.id}] ${n.summary}${n.has_detail ? " >" : ""}`)
-		.join("\n");
-	return `Index of what you know about the user (summaries). Items marked > have fuller detail — call \`recall_profile_notes\` with their ids before relying on it or writing a tailored CV:\n${lines}`;
-}
-
-function skillsIndex(): string {
-	const skills = listSkills();
-	if (!skills.length) return "";
-	const lines = skills.map((s) => `- ${s.name}: ${s.description}`).join("\n");
-	return `Coaching skills — call \`load_skill\` with the name to get the full playbook before doing one of these:\n${lines}`;
-}
-
-/** System prompt for one user. Tool-agnostic: how to use each tool lives in its own description. */
+/** System prompt for one user. Composes one prompt fragment per slice. */
 export function systemPrompt(userId: string): string {
 	return [
 		PERSONA,
-		profileIndex(userId),
-		skillsIndex(),
+		profilePrompt(userId),
+		skillsPrompt(),
 		"Keep the user's profile current as you learn: add durable new notes (a preference, a skill, a whole role with its achievements) and remove ones that become outdated or contradicted.",
 	]
 		.filter(Boolean)

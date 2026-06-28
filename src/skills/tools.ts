@@ -1,9 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { loadSkill } from "@/agents/skills";
+import { loadSkill } from "@/skills/skills";
 
 /** Load a coaching skill's full instructions by name. Global, not user-scoped. */
-export const loadSkillTool = tool({
+const loadSkillTool = tool({
 	description:
 		"Load the full instructions for a coaching skill by name, taken from the skills index in your system prompt. Call this before doing the task the skill covers.",
 	inputSchema: z.object({
@@ -16,3 +16,8 @@ export const loadSkillTool = tool({
 		return content ? { content } : { error: `No skill named '${name}'.` };
 	},
 });
+
+/** The skills slice's tools. Global, not user-scoped. */
+export const skillsTools = {
+	load_skill: loadSkillTool,
+};

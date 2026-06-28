@@ -1,3 +1,4 @@
+import { listSkills } from "@/agents/skills";
 import { listNoteIndex } from "@/profile/notes";
 
 const PERSONA =
@@ -9,16 +10,26 @@ function profileIndex(userId: string): string {
 	if (!notes.length)
 		return "You know nothing about this user yet — ask questions to build their profile.";
 	const lines = notes
-		.map((n) => `- [${n.id}] ${n.summary}${n.has_detail ? " ›" : ""}`)
+		.map((n) => `- [${n.id}] ${n.summary}${n.has_detail ? " >" : ""}`)
 		.join("\n");
-	return `Index of what you know about the user (summaries). Items marked › have fuller detail — call \`recall_profile_notes\` with their ids before relying on it or writing a tailored CV:\n${lines}`;
+	return `Index of what you know about the user (summaries). Items marked > have fuller detail — call \`recall_profile_notes\` with their ids before relying on it or writing a tailored CV:\n${lines}`;
+}
+
+function skillsIndex(): string {
+	const skills = listSkills();
+	if (!skills.length) return "";
+	const lines = skills.map((s) => `- ${s.name}: ${s.description}`).join("\n");
+	return `Coaching skills — call \`load_skill\` with the name to get the full playbook before doing one of these:\n${lines}`;
 }
 
 /** System prompt for one user. Tool-agnostic: how to use each tool lives in its own description. */
 export function systemPrompt(userId: string): string {
-	return `${PERSONA}
-
-${profileIndex(userId)}
-
-Keep the user's profile current as you learn: add durable new notes (a preference, a skill, a whole role with its achievements) and remove ones that become outdated or contradicted.`;
+	return [
+		PERSONA,
+		profileIndex(userId),
+		skillsIndex(),
+		"Keep the user's profile current as you learn: add durable new notes (a preference, a skill, a whole role with its achievements) and remove ones that become outdated or contradicted.",
+	]
+		.filter(Boolean)
+		.join("\n\n");
 }

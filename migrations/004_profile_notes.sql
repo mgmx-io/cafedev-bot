@@ -3,7 +3,7 @@ CREATE TABLE profile_notes (
   user_id       TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
   summary       TEXT NOT NULL,             -- index line, injected every turn
   content       TEXT,                      -- full detail, recalled on demand (NULL = summary says it all)
-  created_at    TEXT NOT NULL,
+  created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   removed_at    TEXT                       -- soft delete: removed-but-kept; NULL = active
 );
 

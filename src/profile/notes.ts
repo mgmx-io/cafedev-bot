@@ -1,6 +1,11 @@
 import { db } from "@/lib/db";
 
-export type NoteIndex = { id: number; summary: string; has_detail: number };
+export type NoteIndex = {
+	id: number;
+	summary: string;
+	has_detail: number;
+};
+
 export type Note = {
 	id: number;
 	summary: string;
@@ -35,8 +40,8 @@ export function addNote(
 	content: string | null,
 ): number {
 	const { lastInsertRowid } = db.run(
-		"INSERT INTO profile_notes (user_id, summary, content, created_at) VALUES (?, ?, ?, ?)",
-		[userId, summary, content, new Date().toISOString()],
+		"INSERT INTO profile_notes (user_id, summary, content) VALUES (?, ?, ?)",
+		[userId, summary, content],
 	);
 	return Number(lastInsertRowid);
 }

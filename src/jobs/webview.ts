@@ -18,7 +18,17 @@ function readPage(view: Bun.WebView): Promise<Page> {
 }
 
 export async function extract(url: string): Promise<Page> {
-	const view = new Bun.WebView({ backend: "chrome" });
+	const view = new Bun.WebView({
+		// url:false forces spawn (no auto-connect). --no-sandbox: Chrome's own
+		// namespace sandbox is blocked by the systemd unit's RestrictNamespaces;
+		// the unit already confines the process. --disable-dev-shm-usage: use
+		// /tmp not /dev/shm (PrivateTmp gives a small shm). Binary auto-detected.
+		backend: {
+			type: "chrome",
+			url: false,
+			argv: ["--no-sandbox", "--disable-dev-shm-usage"],
+		},
+	});
 	try {
 		await view.navigate("about:blank");
 		await view.cdp("Page.setLifecycleEventsEnabled", { enabled: true });

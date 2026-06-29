@@ -1,6 +1,6 @@
 import { request } from "@/lib/http";
 
-export type Posting = { externalId: string; url: string; raw: string };
+export type Posting = { id: string; url: string; title: string; raw: string };
 
 export type AtsRequest = { url: string; init: RequestInit };
 
@@ -9,7 +9,7 @@ export type Source = (slug: string) => Promise<Posting[]>;
 // biome-ignore lint/suspicious/noExplicitAny: ATS responses have no static shape
 type Payload = any;
 
-type Extracted = { externalId: string; url: string | null };
+type Extracted = { id: string; url?: string; title?: string };
 
 type Map = (item: Payload, slug: string) => Extracted;
 
@@ -25,6 +25,16 @@ function okOr404(res: Response, slug: string): boolean {
 	return true;
 }
 
+function slugToTitle(slug: string): string {
+	let decoded = slug;
+	try {
+		decoded = decodeURIComponent(slug);
+	} catch {
+		// no-op
+	}
+	return decoded.replaceAll("-", " ");
+}
+
 // turns item-pages into deduped Postings; each factory below = a `pages` generator + a `map`
 function source(map: Map, pages: Pages): Source {
 	return async (slug) => {
@@ -33,12 +43,13 @@ function source(map: Map, pages: Pages): Source {
 		for await (const items of pages(slug)) {
 			for (const item of items) {
 				const job = map(item, slug);
-				if (!job.externalId || !job.url) continue;
-				if (seen.has(job.externalId)) continue;
-				seen.add(job.externalId);
+				if (!job.id || !job.url) continue;
+				if (seen.has(job.id)) continue;
+				seen.add(job.id);
 				out.push({
-					externalId: job.externalId,
+					id: job.id,
 					url: job.url,
+					title: job.title ?? "",
 					raw: JSON.stringify(item),
 				});
 			}
@@ -74,11 +85,12 @@ export function htmlSource(shape: {
 
 export function sitemapSource(shape: { path?: string; loc: RegExp }): Source {
 	const path = shape.path ?? "/sitemap.xml";
-	type Entry = { url: string; id: string };
+	type Entry = { url: string; id: string; title: string };
 	return source(
 		(e: Entry) => ({
-			externalId: e.id,
+			id: e.id,
 			url: e.url,
+			title: e.title,
 		}),
 		async function* (slug) {
 			const res = await request(`https://${slug}${path}`);
@@ -89,7 +101,7 @@ export function sitemapSource(shape: { path?: string; loc: RegExp }): Source {
 					const loc = block.match(/<loc>\s*([^<\s]+)/)?.[1];
 					const m = loc?.match(shape.loc);
 					if (!loc || !m) return [];
-					return [{ url: loc, id: m[2] }];
+					return [{ url: loc, id: m[2], title: slugToTitle(m[1]) }];
 				},
 			);
 		},

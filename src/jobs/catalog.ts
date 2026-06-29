@@ -7,7 +7,7 @@ import {
 	sitemapSource,
 } from "@/jobs/source";
 
-export type DetailRoute = (slug: string, externalId: string) => AtsRequest;
+export type DetailRoute = (slug: string, id: string) => AtsRequest;
 
 export type Ats = { match: RegExp[]; source: Source; detail?: DetailRoute };
 
@@ -37,8 +37,9 @@ export const ATS = {
 				`https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true`,
 			select: (r) => r.jobs,
 			map: (p) => ({
-				externalId: String(p.id),
-				url: p.absolute_url ?? null,
+				id: String(p.id),
+				title: p.title,
+				url: p.absolute_url,
 			}),
 		}),
 	},
@@ -52,8 +53,9 @@ export const ATS = {
 			url: (slug) => `https://api.lever.co/v0/postings/${slug}?mode=json`,
 			select: (r) => r,
 			map: (p) => ({
-				externalId: String(p.id),
-				url: p.hostedUrl ?? p.applyUrl ?? null,
+				id: String(p.id),
+				title: p.text,
+				url: p.hostedUrl ?? p.applyUrl,
 			}),
 		}),
 	},
@@ -67,8 +69,9 @@ export const ATS = {
 			url: (slug) => `https://api.ashbyhq.com/posting-api/job-board/${slug}`,
 			select: (r) => r.jobs,
 			map: (p) => ({
-				externalId: String(p.id),
-				url: p.jobUrl ?? p.applyUrl ?? null,
+				id: String(p.id),
+				title: p.title,
+				url: p.jobUrl ?? p.applyUrl,
 			}),
 		}),
 	},
@@ -80,8 +83,9 @@ export const ATS = {
 				`https://apply.workable.com/api/v1/widget/accounts/${slug}?details=true`,
 			select: (r) => r.jobs,
 			map: (p) => ({
-				externalId: String(p.shortcode ?? p.code),
-				url: p.url ?? p.shortlink ?? null,
+				id: String(p.shortcode ?? p.code),
+				title: p.title,
+				url: p.url ?? p.shortlink,
 			}),
 		}),
 	},
@@ -92,8 +96,9 @@ export const ATS = {
 			url: (slug) => `https://${slug}.recruitee.com/api/offers/`,
 			select: (r) => r.offers,
 			map: (p) => ({
-				externalId: String(p.id),
-				url: p.careers_url ?? null,
+				id: String(p.id),
+				title: p.title,
+				url: p.careers_url,
 			}),
 		}),
 	},
@@ -104,8 +109,9 @@ export const ATS = {
 			url: (slug) => `https://${slug}.breezy.hr/json?verbose=true`,
 			select: (r) => r,
 			map: (p) => ({
-				externalId: String(p.id),
-				url: p.url ?? null,
+				id: String(p.id),
+				title: p.name,
+				url: p.url,
 			}),
 		}),
 	},
@@ -116,8 +122,9 @@ export const ATS = {
 			url: (slug) => `https://${slug}.teamtailor.com/jobs.json`,
 			select: (r) => r.items,
 			map: (p) => ({
-				externalId: String(p.id),
-				url: p.url ?? null,
+				id: String(p.id),
+				title: p.title,
+				url: p.url,
 			}),
 		}),
 	},
@@ -128,7 +135,8 @@ export const ATS = {
 			url: (slug) => `https://${slug}.bamboohr.com/careers/list`,
 			select: (r) => r.result,
 			map: (p, slug) => ({
-				externalId: String(p.id),
+				id: String(p.id),
+				title: p.jobOpeningName,
 				url: `https://${slug}.bamboohr.com/careers/${p.id}`,
 			}),
 		}),
@@ -153,7 +161,8 @@ export const ATS = {
 			step: 100,
 			select: (r) => r.content,
 			map: (p, slug) => ({
-				externalId: String(p.id),
+				id: String(p.id),
+				title: p.name,
 				url: `https://jobs.smartrecruiters.com/${slug}/${p.id}`,
 			}),
 		}),
@@ -191,14 +200,15 @@ export const ATS = {
 			map: (p, slug) => {
 				const { site, base } = wd(slug);
 				return {
-					externalId: p.externalPath,
+					id: p.externalPath,
+					title: p.title,
 					url: `${base}/${site}${p.externalPath}`,
 				};
 			},
 		}),
-		detail: (slug, externalId) => {
+		detail: (slug, id) => {
 			const { tenant, site, base } = wd(slug);
-			return get(`${base}/wday/cxs/${tenant}/${site}${externalId}`);
+			return get(`${base}/wday/cxs/${tenant}/${site}${id}`);
 		},
 	},
 
@@ -213,8 +223,9 @@ export const ATS = {
 			step: 1,
 			select: (r) => r.data,
 			map: (p) => ({
-				externalId: p.id,
-				url: p.links?.public_url ?? null,
+				id: p.id,
+				title: p.attributes?.title,
+				url: p.links?.public_url,
 			}),
 		}),
 	},
@@ -226,7 +237,8 @@ export const ATS = {
 			url: (slug) => `https://${slug}.hiringroom.com/jobs`,
 			item: /\/jobs\/get_vacancy\/([a-f0-9]{24})"[\s\S]*?name__vacancy">\s*([^<]+?)\s*<\/h4>/g,
 			map: (m, slug) => ({
-				externalId: m[1],
+				id: m[1],
+				title: m[2],
 				url: `https://${slug}.hiringroom.com/jobs/get_vacancy/${m[1]}`,
 			}),
 		}),
@@ -240,7 +252,8 @@ export const ATS = {
 			url: (slug) => `https://${slug}.peopleforce.io/careers`,
 			item: /\/careers\/v\/(\d+)-([^"#?]+)"/g,
 			map: (m, slug) => ({
-				externalId: m[1],
+				id: m[1],
+				title: m[2].replace(/-/g, " "),
 				url: `https://${slug}.peopleforce.io/careers/v/${m[1]}-${m[2]}`,
 			}),
 		}),

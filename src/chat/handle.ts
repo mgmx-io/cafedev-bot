@@ -18,8 +18,6 @@ class Conversation {
 		return `Vinculá tu cuenta: ${BETTER_AUTH_URL}/api/link/${token}`;
 	}
 
-	// ponytail: read-modify-write sin lock; ok con canales secuenciales (CLI).
-	// Lock o cola por sender cuando telegram procese updates concurrentes.
 	private async chat(content: string, userId: string): Promise<string> {
 		const { channel, channelUserId } = this.sender;
 		const sessionId = `${channel}:${channelUserId}`;

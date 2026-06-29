@@ -9,7 +9,7 @@ export async function run(
 	sessionId: string,
 ): Promise<{ text: string; responseMessages: ModelMessage[] }> {
 	const agent = new ToolLoopAgent({
-		model: "openai/gpt-5.4-nano",
+		model: "deepseek/deepseek-v4-pro",
 		instructions: systemPrompt(userId),
 		tools: buildTools(userId),
 	});

@@ -1,3 +1,4 @@
+import { propagateAttributes } from "@langfuse/tracing";
 import { type ModelMessage, ToolLoopAgent } from "ai";
 import { systemPrompt } from "@/agents/prompt";
 import { buildTools } from "@/agents/tools";
@@ -11,6 +12,8 @@ export async function run(
 		instructions: systemPrompt(userId),
 		tools: buildTools(userId),
 	});
-	const { text, responseMessages } = await agent.generate({ messages });
-	return { text, responseMessages };
+
+	return await propagateAttributes({ userId }, () =>
+		agent.generate({ messages }),
+	);
 }

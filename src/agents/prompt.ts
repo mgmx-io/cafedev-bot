@@ -1,3 +1,4 @@
+import { jobsPrompt } from "@/jobs/prompt";
 import { profilePrompt } from "@/profile/prompt";
 import { skillsPrompt } from "@/skills/prompt";
 
@@ -10,6 +11,7 @@ export function systemPrompt(userId: string): string {
 		PERSONA,
 		profilePrompt(userId),
 		skillsPrompt(),
+		jobsPrompt(userId),
 		"Keep the user's profile current as you learn: add durable new notes (a preference, a skill, a whole role with its achievements) and remove ones that become outdated or contradicted.",
 	]
 		.filter(Boolean)

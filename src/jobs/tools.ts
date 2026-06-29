@@ -1,23 +1,27 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { list, setFit, track } from "@/jobs/applications";
 import { getJob, saveJob } from "@/jobs/store";
 import { extract } from "@/jobs/webview";
 import { normalizeUrl } from "@/lib/url";
 
-/** Fetch a pasted job posting, extract its description, and save it. */
-const ingestJob = tool({
-	description: "Ingest the job posting at the URL the user pasted.",
-	inputSchema: z.object({
-		url: z.url().describe("The job-posting URL the user pasted."),
-	}),
-	execute: async ({ url }) => {
-		const normalized = normalizeUrl(url);
-		const { title, text } = await extract(normalized);
-		return { id: saveJob(normalized, title, text), title };
-	},
-});
+/** Fetch a pasted job posting, save it, and start tracking it for the user. */
+const ingestJob = (userId: string) =>
+	tool({
+		description: "Ingest the job posting at the URL the user pasted.",
+		inputSchema: z.object({
+			url: z.url().describe("The job-posting URL the user pasted."),
+		}),
+		execute: async ({ url }) => {
+			const normalized = normalizeUrl(url);
+			const { title, text } = await extract(normalized);
+			const id = saveJob(normalized, title, text);
+			track(userId, id);
+			return { id, title };
+		},
+	});
 
-/** Fetch a saved job posting's full description by id. */
+/** Fetch a saved job posting's full description by id. Global, not user-scoped. */
 const recallJob = tool({
 	description:
 		"Fetch a saved job posting's full description by id. Use before evaluating how it fits the user.",
@@ -30,7 +34,34 @@ const recallJob = tool({
 	},
 });
 
-export const jobsTools = {
-	ingest_job: ingestJob,
+/** Record a job-fit verdict for the user. Bound to one user. */
+const recordFit = (userId: string) =>
+	tool({
+		description:
+			"Record a job-fit verdict for a saved job. Call after assessing fit with the job-fit skill.",
+		inputSchema: z.object({
+			job_id: z.number().int().positive(),
+			fit: z.enum(["apply", "stretch", "skip"]),
+		}),
+		execute: ({ job_id, fit }) => {
+			setFit(userId, job_id, fit);
+			return { ok: true };
+		},
+	});
+
+/** List the jobs the user is tracking. Bound to one user. */
+const listJobs = (userId: string) =>
+	tool({
+		description:
+			"List the jobs the user is tracking — id, title, status, and fit. Use when they ask about a job they saved earlier.",
+		inputSchema: z.object({}),
+		execute: () => ({ jobs: list(userId) }),
+	});
+
+/** The jobs slice's tools, bound to one user. */
+export const jobsTools = (userId: string) => ({
+	ingest_job: ingestJob(userId),
 	recall_job: recallJob,
-};
+	record_fit: recordFit(userId),
+	list_jobs: listJobs(userId),
+});

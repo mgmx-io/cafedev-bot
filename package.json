@@ -19,6 +19,10 @@
 		"typescript": "^5"
 	},
 	"dependencies": {
+		"@langfuse/otel": "^5.9.0",
+		"@langfuse/tracing": "^5.9.0",
+		"@langfuse/vercel-ai-sdk": "^5.9.0",
+		"@opentelemetry/sdk-node": "^0.219.0",
 		"ai": "^7.0.2",
 		"better-auth": "^1.6.22",
 		"gray-matter": "^4.0.3",

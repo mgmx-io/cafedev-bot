@@ -26,11 +26,11 @@ function okOr404(res: Response, slug: string): boolean {
 }
 
 function slugToTitle(slug: string): string {
-	let decoded = slug;
+	let decoded: string;
 	try {
 		decoded = decodeURIComponent(slug);
 	} catch {
-		// no-op
+		decoded = slug;
 	}
 	return decoded.replaceAll("-", " ");
 }

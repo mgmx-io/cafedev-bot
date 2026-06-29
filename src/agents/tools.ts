@@ -1,3 +1,4 @@
+import { jobsTools } from "@/jobs/tools";
 import { profileTools } from "@/profile/tools";
 import { skillsTools } from "@/skills/tools";
 
@@ -5,4 +6,5 @@ import { skillsTools } from "@/skills/tools";
 export const buildTools = (userId: string) => ({
 	...profileTools(userId),
 	...skillsTools,
+	...jobsTools,
 });

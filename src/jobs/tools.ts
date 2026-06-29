@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { saveJob } from "@/jobs/store";
+import { getJob, saveJob } from "@/jobs/store";
 import { extract } from "@/jobs/webview";
 import { normalizeUrl } from "@/lib/url";
 
@@ -17,6 +17,20 @@ const ingestJob = tool({
 	},
 });
 
+/** Fetch a saved job posting's full description by id. */
+const recallJob = tool({
+	description:
+		"Fetch a saved job posting's full description by id. Use before evaluating how it fits the user.",
+	inputSchema: z.object({ id: z.number().int().positive() }),
+	execute: ({ id }) => {
+		const job = getJob(id);
+		return job
+			? { title: job.title, content: job.content }
+			: { error: `No job with id ${id}.` };
+	},
+});
+
 export const jobsTools = {
 	ingest_job: ingestJob,
+	recall_job: recallJob,
 };

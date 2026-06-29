@@ -21,9 +21,11 @@ class Conversation {
 	// ponytail: read-modify-write sin lock; ok con canales secuenciales (CLI).
 	// Lock o cola por sender cuando telegram procese updates concurrentes.
 	private async chat(content: string, userId: string): Promise<string> {
+		const { channel, channelUserId } = this.sender;
+		const sessionId = `${channel}:${channelUserId}`;
 		const userMsg: ModelMessage = { role: "user", content };
 		const history = [...loadContext(this.sender), userMsg];
-		const { text, responseMessages } = await run(history, userId);
+		const { text, responseMessages } = await run(history, userId, sessionId);
 		saveContext(this.sender, [...history, ...responseMessages]);
 		return text;
 	}

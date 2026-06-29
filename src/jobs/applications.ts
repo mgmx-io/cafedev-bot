@@ -2,10 +2,20 @@ import { db } from "@/lib/db";
 
 export type Fit = "apply" | "stretch" | "skip";
 
+export const STATUSES = [
+	"considering",
+	"applied",
+	"interviewing",
+	"offer",
+	"rejected",
+	"withdrawn",
+] as const;
+export type Status = (typeof STATUSES)[number];
+
 export type TrackedJob = {
 	job_id: number;
 	title: string;
-	status: string;
+	status: Status;
 	fit: Fit | null;
 };
 
@@ -26,10 +36,25 @@ export function setFit(userId: string, jobId: number, fit: Fit): void {
 	);
 }
 
+/** Move a tracked job to a new lifecycle status. False if the user isn't tracking it. */
+export function setStatus(
+	userId: string,
+	jobId: number,
+	status: Status,
+): boolean {
+	return (
+		db.run(
+			"UPDATE job_applications SET status = ? WHERE user_id = ? AND job_id = ?",
+			[status, userId, jobId],
+		).changes > 0
+	);
+}
+
 export type Counts = {
 	total: number;
 	status: [string, number][];
 	fit: [string, number][];
+	readyToApply: number;
 };
 
 /** Aggregate counts of a user's tracked jobs, for the injected prompt block. */
@@ -46,8 +71,15 @@ export function counts(userId: string): Counts {
 		)
 		.all(userId)
 		.map((r) => [r.k, r.n] as [string, number]);
+	// jobs rated worth applying to but not yet applied — the nudge signal
+	const readyToApply =
+		db
+			.query<{ n: number }, [string]>(
+				"SELECT COUNT(*) AS n FROM job_applications WHERE user_id = ? AND fit = 'apply' AND status = 'considering'",
+			)
+			.get(userId)?.n ?? 0;
 	const total = status.reduce((sum, [, n]) => sum + n, 0);
-	return { total, status, fit };
+	return { total, status, fit, readyToApply };
 }
 
 /** Jobs the user is tracking, newest first. Joined with the posting for the injected index. */

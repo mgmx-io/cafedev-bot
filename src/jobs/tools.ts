@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { list, setFit, track } from "@/jobs/applications";
+import { list, STATUSES, setFit, setStatus, track } from "@/jobs/applications";
 import { getJob, saveJob } from "@/jobs/store";
 import { extract } from "@/jobs/webview";
 import { normalizeUrl } from "@/lib/url";
@@ -58,10 +58,26 @@ const listJobs = (userId: string) =>
 		execute: () => ({ jobs: list(userId) }),
 	});
 
+/** Update a tracked job's lifecycle status. Bound to one user. */
+const setJobStatus = (userId: string) =>
+	tool({
+		description:
+			"Update a tracked job's lifecycle status — e.g. when the user applies, lands an interview, or gets an offer.",
+		inputSchema: z.object({
+			job_id: z.number().int().positive(),
+			status: z.enum(STATUSES),
+		}),
+		execute: ({ job_id, status }) =>
+			setStatus(userId, job_id, status)
+				? { ok: true }
+				: { error: `Not tracking job ${job_id}.` },
+	});
+
 /** The jobs slice's tools, bound to one user. */
 export const jobsTools = (userId: string) => ({
 	ingest_job: ingestJob(userId),
 	recall_job: recallJob,
 	record_fit: recordFit(userId),
 	list_jobs: listJobs(userId),
+	set_status: setJobStatus(userId),
 });

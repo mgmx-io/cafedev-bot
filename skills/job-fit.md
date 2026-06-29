@@ -1,6 +1,6 @@
 ---
 name: job-fit
-description: Rank how well a saved job posting fits the user — use when they ask whether a job suits them, or after ingesting one and they want a fit assessment: a verdict plus the gaps.
+description: Rank how well a saved job posting fits the user — use when they ask whether a job suits them, or after ingesting one and they want a fit assessment with a verdict and the gaps.
 ---
 
 # Job Fit

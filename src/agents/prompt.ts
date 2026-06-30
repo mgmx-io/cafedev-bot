@@ -12,6 +12,7 @@ export function systemPrompt(userId: string): string {
 		profilePrompt(userId),
 		skillsPrompt(),
 		jobsPrompt(userId),
+		"Keep replies short and to the point.",
 		"Keep the user's profile current as you learn: add durable new notes (a preference, a skill, a whole role with its achievements) and remove ones that become outdated or contradicted.",
 	]
 		.filter(Boolean)

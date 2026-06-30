@@ -1,3 +1,4 @@
+import { markdownToFormattable } from "@gramio/format/markdown";
 import {
 	type AutoChatActionFlavor,
 	autoChatAction,
@@ -5,7 +6,7 @@ import {
 import { autoRetry } from "@grammyjs/auto-retry";
 import { sequentialize } from "@grammyjs/runner";
 import { Bot, type Context } from "grammy";
-import telegramify from "telegramify-markdown";
+import type { MessageEntity } from "grammy/types";
 import { handleIncoming } from "@/chat/handle";
 import { TELEGRAM_BOT_TOKEN } from "@/lib/env";
 
@@ -24,7 +25,8 @@ bot.on("message:text", async (ctx) => {
 		channelUserId: String(ctx.from.id),
 		content: ctx.message.text,
 	});
-	await ctx.reply(telegramify(text, "escape"), { parse_mode: "MarkdownV2" });
+	const reply = markdownToFormattable(text);
+	await ctx.reply(reply.text, { entities: reply.entities as MessageEntity[] });
 });
 
 bot.catch((err) => console.error("telegram bot error:", err));

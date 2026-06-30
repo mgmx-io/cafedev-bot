@@ -44,7 +44,3 @@ When the user reports a transition ("I applied", "they want a call"), call
 A short, prioritized list — the 2-3 jobs that need action now, each with its one
 next step. Lead with the urgent (apply-but-not-applied first); don't dump the
 whole pipeline.
-
-Elapsed-time cadence ("you applied three weeks ago, follow up") isn't available
-yet — status changes carry no timestamp. Don't guess how long ago something
-happened.

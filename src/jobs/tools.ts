@@ -1,7 +1,11 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { list, STATUSES, setFit, setStatus, track } from "@/jobs/applications";
-import { followCompany, resolveBoard } from "@/jobs/companies";
+import {
+	checkNewPostings,
+	followCompany,
+	resolveBoard,
+} from "@/jobs/companies";
 import { getJob, saveJob } from "@/jobs/store";
 import { extract } from "@/jobs/webview";
 import { normalizeUrl } from "@/lib/url";
@@ -33,6 +37,15 @@ const followCompanyTool = (userId: string) =>
 			followCompany(userId, board_id);
 			return { ok: true };
 		},
+	});
+
+/** Scrape every board the user follows for postings not yet tracked. Bound to one user. */
+const checkNewPostingsTool = (userId: string) =>
+	tool({
+		description:
+			"Check every company board the user follows for postings not yet tracked. Call when the user asks to check for new positions.",
+		inputSchema: z.object({}),
+		execute: async () => checkNewPostings(userId),
 	});
 
 /** Fetch a saved job posting's full description by id. Global, not user-scoped. */
@@ -95,4 +108,5 @@ export const jobsTools = (userId: string) => ({
 	list_jobs: listJobs(userId),
 	set_status: setJobStatus(userId),
 	follow_company: followCompanyTool(userId),
+	check_new_postings: checkNewPostingsTool(userId),
 });

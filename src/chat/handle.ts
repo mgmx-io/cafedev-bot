@@ -29,8 +29,17 @@ class Conversation {
 	}
 }
 
+const queues = new Map<string, Promise<unknown>>();
+
 export function handleIncoming(
 	msg: Sender & { content: string },
 ): Promise<{ text: string }> {
-	return new Conversation(msg).handle(msg.content);
+	const key = `${msg.channel}:${msg.channelUserId}`;
+	const tail = queues.get(key) ?? Promise.resolve();
+	const job = tail.then(() => new Conversation(msg).handle(msg.content));
+	queues.set(
+		key,
+		job.catch(() => {}),
+	);
+	return job;
 }

@@ -54,7 +54,6 @@ export type Counts = {
 	total: number;
 	status: [string, number][];
 	fit: [string, number][];
-	readyToApply: number;
 };
 
 /** Aggregate counts of a user's tracked jobs, for the injected prompt block. */
@@ -71,15 +70,8 @@ export function counts(userId: string): Counts {
 		)
 		.all(userId)
 		.map((r) => [r.k, r.n] as [string, number]);
-	// jobs rated worth applying to but not yet applied — the nudge signal
-	const readyToApply =
-		db
-			.query<{ n: number }, [string]>(
-				"SELECT COUNT(*) AS n FROM job_applications WHERE user_id = ? AND fit = 'apply' AND status = 'considering'",
-			)
-			.get(userId)?.n ?? 0;
 	const total = status.reduce((sum, [, n]) => sum + n, 0);
-	return { total, status, fit, readyToApply };
+	return { total, status, fit };
 }
 
 /** Jobs the user is tracking, newest first. Joined with the posting for the injected index. */

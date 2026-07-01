@@ -269,3 +269,19 @@ export const ATS = {
 		detail: (slug, id) => get(`https://${slug}/job/x/${id}/`),
 	},
 } satisfies Record<string, Ats>;
+
+export type AtsName = keyof typeof ATS;
+
+/** Detect the ATS + canonical slug for a pasted job URL, if it matches the catalog. */
+export function detectSource(
+	url: string,
+): { ats: AtsName; slug: string } | null {
+	for (const [ats, def] of Object.entries(ATS)) {
+		for (const re of def.match) {
+			const m = url.match(re);
+			const slug = m?.slice(1).filter(Boolean).join("/");
+			if (slug) return { ats: ats as AtsName, slug };
+		}
+	}
+	return null;
+}

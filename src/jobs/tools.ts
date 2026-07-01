@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { list, STATUSES, setFit, setStatus, track } from "@/jobs/applications";
+import { followCompany, resolveBoard } from "@/jobs/companies";
 import { getJob, saveJob } from "@/jobs/store";
 import { extract } from "@/jobs/webview";
 import { normalizeUrl } from "@/lib/url";
@@ -15,9 +16,22 @@ const ingestJob = (userId: string) =>
 		execute: async ({ url }) => {
 			const normalized = normalizeUrl(url);
 			const { title, text } = await extract(normalized);
-			const id = saveJob(normalized, title, text);
+			const board = resolveBoard(normalized);
+			const id = saveJob(normalized, title, text, board?.id ?? null);
 			track(userId, id);
-			return { id, title };
+			return { id, title, board };
+		},
+	});
+
+/** Follow a company board (detected by ingest_job) so the user can be notified of future postings there. */
+const followCompanyTool = (userId: string) =>
+	tool({
+		description:
+			"Follow a company's job board so the user can be notified of future postings. Only call once the user agrees, after ingest_job detects a board.",
+		inputSchema: z.object({ board_id: z.number().int().positive() }),
+		execute: ({ board_id }) => {
+			followCompany(userId, board_id);
+			return { ok: true };
 		},
 	});
 
@@ -80,4 +94,5 @@ export const jobsTools = (userId: string) => ({
 	record_fit: recordFit(userId),
 	list_jobs: listJobs(userId),
 	set_status: setJobStatus(userId),
+	follow_company: followCompanyTool(userId),
 });

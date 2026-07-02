@@ -111,7 +111,7 @@ export const ATS = {
 	},
 
 	teamtailor: {
-		match: [/([\w-]+)\.teamtailor\.com/i],
+		match: [/([\w-]+(?:\.[a-z]{2})?)\.teamtailor\.com/i],
 		source: jsonSource({
 			url: (slug) => `https://${slug}.teamtailor.com/jobs.json`,
 			select: (r) => r.items,

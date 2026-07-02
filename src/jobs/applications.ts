@@ -10,6 +10,7 @@ export const STATUSES = [
 	"rejected",
 	"withdrawn",
 ] as const;
+
 export type Status = (typeof STATUSES)[number];
 
 export type TrackedJob = {

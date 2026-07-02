@@ -13,7 +13,7 @@ type BotContext = Context & AutoChatActionFlavor;
 type Chat = { texts: string[]; latest?: Context };
 
 export const bot = new Bot<BotContext>(TELEGRAM_BOT_TOKEN);
-const DEBOUNCE_MS = 2000;
+const DEBOUNCE_MS = 0;
 const chats = new Map<number, Chat>();
 
 bot.api.config.use(autoRetry());

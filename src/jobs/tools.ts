@@ -22,11 +22,11 @@ const ingestJob = (userId: string) =>
 		},
 	});
 
-/** Follow a company's job board by URL so the user can be notified of future postings there. */
+/** Follow a company's job board by URL so its openings show up in check_boards. */
 const followCompanyTool = (userId: string) =>
 	tool({
 		description:
-			"Follow a company's job board so the user can be notified of future postings. Takes a job-posting or careers-page URL; fails if the URL is not on a known ATS.",
+			"Follow a company's job board so its openings show up in check_boards. Takes a job-posting or careers-page URL; fails if the URL is not on a known ATS.",
 		inputSchema: z.object({
 			url: z
 				.url()

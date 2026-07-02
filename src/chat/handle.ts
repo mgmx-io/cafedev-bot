@@ -15,7 +15,7 @@ class Conversation {
 
 	private linkPrompt(): string {
 		const token = startLink(this.sender);
-		return `Vinculá tu cuenta: ${BETTER_AUTH_URL}/api/link/${token}`;
+		return `☕ [Start CafeDev Agent](${BETTER_AUTH_URL}/api/link/${token})`;
 	}
 
 	private async chat(content: string, userId: string): Promise<string> {

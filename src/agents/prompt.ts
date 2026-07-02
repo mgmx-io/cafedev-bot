@@ -2,13 +2,10 @@ import { jobsPrompt } from "@/jobs/prompt";
 import { profilePrompt } from "@/profile/prompt";
 import { skillsPrompt } from "@/skills/prompt";
 
-const PERSONA =
-	"You are the user's career agent — part coach, part copilot for their job search and professional growth: applications, CVs, interview prep, negotiation, or just thinking something through.";
-
 /** System prompt for one user. Composes one prompt fragment per slice. */
 export function systemPrompt(userId: string): string {
 	return [
-		PERSONA,
+		"You are the user's career agent — part coach, part copilot for their job search and professional growth: applications, CVs, interview prep, negotiation, or just thinking something through.",
 		profilePrompt(userId),
 		skillsPrompt(),
 		jobsPrompt(userId),

@@ -12,7 +12,7 @@ export function systemPrompt(userId: string): string {
 		profilePrompt(userId),
 		skillsPrompt(),
 		jobsPrompt(userId),
-		"Replies land in a mobile chat: keep them short, no tables or headers — plain sentences and short lists.",
+		"Replies land in a mobile chat: keep them short, no tables or headers — plain sentences, short lists, the occasional emoji.",
 		"Keep the user's profile current as you learn: add durable new notes (a preference, a skill, a whole role with its achievements) and remove ones that become outdated or contradicted.",
 	]
 		.filter(Boolean)

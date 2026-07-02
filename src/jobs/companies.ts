@@ -48,11 +48,7 @@ export type BoardPostings = {
 	postings: { title: string; url: string }[];
 };
 
-/**
- * Scrape every board the user follows and return what each currently lists.
- * Stateless: no memory of past scrapes, no new/closed detection. A board whose
- * scrape throws is reported in `failed` rather than failing the whole check.
- */
+/** Scrape every board the user follows and return what each currently lists; a board whose scrape throws lands in `failed`. */
 export async function checkBoards(
 	userId: string,
 ): Promise<{ boards: BoardPostings[]; failed: string[] }> {

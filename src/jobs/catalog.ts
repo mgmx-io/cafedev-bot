@@ -1,17 +1,11 @@
 import {
-	type AtsRequest,
 	htmlSource,
 	jsonSource,
 	pagedSource,
 	type Source,
-	sitemapSource,
 } from "@/jobs/source";
 
-export type DetailRoute = (slug: string, id: string) => AtsRequest;
-
-export type Ats = { match: RegExp[]; source: Source; detail?: DetailRoute };
-
-const get = (url: string): AtsRequest => ({ url, init: { method: "GET" } });
+export type Ats = { match: RegExp[]; source: Source };
 
 // Workday slugs are composite: "tenant/dc/site". Parse in one place.
 const wd = (slug: string) => {
@@ -140,9 +134,6 @@ export const ATS = {
 				url: `https://${slug}.bamboohr.com/careers/${p.id}`,
 			}),
 		}),
-		// list endpoint carries no description; the /detail JSON does
-		detail: (slug, id) =>
-			get(`https://${slug}.bamboohr.com/careers/${id}/detail`),
 	},
 
 	// ─── pagedSource: cursor pagination (start/step) ─────────────────────────
@@ -153,10 +144,10 @@ export const ATS = {
 			/jobs\.smartrecruiters\.com\/(?:oneclick-ui\/company\/)?([\w-]+)/i,
 		],
 		source: pagedSource({
-			request: (slug, offset) =>
-				get(
-					`https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100&offset=${offset}&country=ar`,
-				),
+			request: (slug, offset) => ({
+				url: `https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100&offset=${offset}&country=ar`,
+				init: {},
+			}),
 			start: 0,
 			step: 100,
 			select: (r) => r.content,
@@ -166,10 +157,6 @@ export const ATS = {
 				url: `https://jobs.smartrecruiters.com/${slug}/${p.id}`,
 			}),
 		}),
-		detail: (slug, id) =>
-			get(
-				`https://api.smartrecruiters.com/v1/companies/${slug}/postings/${id}`,
-			),
 	},
 
 	workday: {
@@ -206,10 +193,6 @@ export const ATS = {
 				};
 			},
 		}),
-		detail: (slug, id) => {
-			const { tenant, site, base } = wd(slug);
-			return get(`${base}/wday/cxs/${tenant}/${site}${id}`);
-		},
 	},
 
 	getonbrd: {
@@ -242,8 +225,6 @@ export const ATS = {
 				url: `https://${slug}.hiringroom.com/jobs/get_vacancy/${m[1]}`,
 			}),
 		}),
-		detail: (slug, id) =>
-			get(`https://${slug}.hiringroom.com/jobs/get_vacancy/${id}`),
 	},
 
 	peopleforce: {
@@ -257,16 +238,6 @@ export const ATS = {
 				url: `https://${slug}.peopleforce.io/careers/v/${m[1]}-${m[2]}`,
 			}),
 		}),
-		detail: (slug, id) => get(`https://${slug}.peopleforce.io/careers/v/${id}`),
-	},
-
-	// ─── sitemapSource: parse sitemap.xml ────────────────────────────────────
-	successfactors: {
-		match: [/rmkcdn\.successfactors\.com/i],
-		source: sitemapSource({
-			loc: /\/job\/([^/]+)\/(\d+)\/?$/,
-		}),
-		detail: (slug, id) => get(`https://${slug}/job/x/${id}/`),
 	},
 } satisfies Record<string, Ats>;
 

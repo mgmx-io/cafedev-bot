@@ -1,6 +1,6 @@
 import { request } from "@/lib/http";
 
-export type Posting = { id: string; url: string; title: string; raw: string };
+export type Posting = { id: string; url: string; title: string };
 
 export type AtsRequest = { url: string; init: RequestInit };
 
@@ -25,16 +25,6 @@ function okOr404(res: Response, slug: string): boolean {
 	return true;
 }
 
-function slugToTitle(slug: string): string {
-	let decoded: string;
-	try {
-		decoded = decodeURIComponent(slug);
-	} catch {
-		decoded = slug;
-	}
-	return decoded.replaceAll("-", " ");
-}
-
 // turns item-pages into deduped Postings; each factory below = a `pages` generator + a `map`
 function source(map: Map, pages: Pages): Source {
 	return async (slug) => {
@@ -46,12 +36,7 @@ function source(map: Map, pages: Pages): Source {
 				if (!job.id || !job.url) continue;
 				if (seen.has(job.id)) continue;
 				seen.add(job.id);
-				out.push({
-					id: job.id,
-					url: job.url,
-					title: job.title ?? "",
-					raw: JSON.stringify(item),
-				});
+				out.push({ id: job.id, url: job.url, title: job.title ?? "" });
 			}
 		}
 		return out;
@@ -81,31 +66,6 @@ export function htmlSource(shape: {
 		if (!okOr404(res, slug)) return;
 		yield [...(await res.text()).matchAll(shape.item)];
 	});
-}
-
-export function sitemapSource(shape: { path?: string; loc: RegExp }): Source {
-	const path = shape.path ?? "/sitemap.xml";
-	type Entry = { url: string; id: string; title: string };
-	return source(
-		(e: Entry) => ({
-			id: e.id,
-			url: e.url,
-			title: e.title,
-		}),
-		async function* (slug) {
-			const res = await request(`https://${slug}${path}`);
-			if (!okOr404(res, slug)) return;
-			const xml = await res.text();
-			yield [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].flatMap(
-				([, block]) => {
-					const loc = block.match(/<loc>\s*([^<\s]+)/)?.[1];
-					const m = loc?.match(shape.loc);
-					if (!loc || !m) return [];
-					return [{ url: loc, id: m[2], title: slugToTitle(m[1]) }];
-				},
-			);
-		},
-	);
 }
 
 // cursor pagination; `start`/`step` fit offset- and page-based APIs, stops on first empty page

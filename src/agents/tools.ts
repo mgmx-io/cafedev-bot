@@ -1,3 +1,4 @@
+import { queryTools } from "@/agents/query";
 import { jobsTools } from "@/jobs/tools";
 import { profileTools } from "@/profile/tools";
 import { skillsTools } from "@/skills/tools";
@@ -7,4 +8,5 @@ export const buildTools = (userId: string) => ({
 	...skillsTools,
 	...profileTools(userId),
 	...jobsTools(userId),
+	...queryTools(userId),
 });

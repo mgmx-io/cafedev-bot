@@ -30,17 +30,12 @@ export function setFit(userId: string, jobId: number, fit: Fit): void {
 	);
 }
 
-/** Move a tracked job to a new lifecycle status. False if the user isn't tracking it. */
-export function setStatus(
-	userId: string,
-	jobId: number,
-	status: Status,
-): boolean {
-	return (
-		db.run(
-			"UPDATE job_applications SET status = ? WHERE user_id = ? AND job_id = ?",
-			[status, userId, jobId],
-		).changes > 0
+/** Move a job to a new lifecycle status. Creates the tracking row if missing, else updates it. */
+export function setStatus(userId: string, jobId: number, status: Status): void {
+	db.run(
+		`INSERT INTO job_applications (user_id, job_id, status) VALUES (?, ?, ?)
+		 ON CONFLICT (user_id, job_id) DO UPDATE SET status = excluded.status`,
+		[userId, jobId, status],
 	);
 }
 

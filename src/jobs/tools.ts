@@ -69,19 +69,19 @@ const recordFit = (userId: string) =>
 		},
 	});
 
-/** Update a tracked job's lifecycle status. Bound to one user. */
+/** Update a job's lifecycle status — e.g. when the user applies, lands an interview, or gets an offer. Bound to one user. */
 const setJobStatus = (userId: string) =>
 	tool({
 		description:
-			"Update a tracked job's lifecycle status — e.g. when the user applies, lands an interview, or gets an offer.",
+			"Set a job's lifecycle status — e.g. when the user applies, lands an interview, or gets an offer. Starts tracking the job if it wasn't already.",
 		inputSchema: z.object({
 			job_id: z.number().int().positive(),
 			status: z.enum(STATUSES),
 		}),
-		execute: ({ job_id, status }) =>
-			setStatus(userId, job_id, status)
-				? { ok: true }
-				: { error: `Not tracking job ${job_id}.` },
+		execute: ({ job_id, status }) => {
+			setStatus(userId, job_id, status);
+			return { ok: true };
+		},
 	});
 
 /** The jobs slice's tools, bound to one user. */

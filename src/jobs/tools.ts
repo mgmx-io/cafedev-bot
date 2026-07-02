@@ -1,11 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { list, STATUSES, setFit, setStatus, track } from "@/jobs/applications";
-import {
-	checkNewPostings,
-	followCompany,
-	resolveBoard,
-} from "@/jobs/companies";
+import { checkBoards, followCompany, resolveBoard } from "@/jobs/companies";
 import { getJob, saveJob } from "@/jobs/store";
 import { extract } from "@/jobs/webview";
 import { normalizeUrl } from "@/lib/url";
@@ -20,32 +16,42 @@ const ingestJob = (userId: string) =>
 		execute: async ({ url }) => {
 			const normalized = normalizeUrl(url);
 			const { title, text } = await extract(normalized);
-			const board = resolveBoard(normalized);
-			const id = saveJob(normalized, title, text, board?.id ?? null);
+			const id = saveJob(normalized, title, text);
 			track(userId, id);
-			return { id, title, board };
+			return { id, title };
 		},
 	});
 
-/** Follow a company board (detected by ingest_job) so the user can be notified of future postings there. */
+/** Follow a company's job board by URL so the user can be notified of future postings there. */
 const followCompanyTool = (userId: string) =>
 	tool({
 		description:
-			"Follow a company's job board so the user can be notified of future postings. Only call once the user agrees, after ingest_job detects a board.",
-		inputSchema: z.object({ board_id: z.number().int().positive() }),
-		execute: ({ board_id }) => {
-			followCompany(userId, board_id);
-			return { ok: true };
+			"Follow a company's job board so the user can be notified of future postings. Takes a job-posting or careers-page URL; fails if the URL is not on a known ATS.",
+		inputSchema: z.object({
+			url: z
+				.url()
+				.describe("A job-posting or careers-page URL of the company."),
+		}),
+		execute: async ({ url }) => {
+			const normalized = normalizeUrl(url);
+			let board = resolveBoard(normalized);
+			if (!board) {
+				const page = await extract(normalized);
+				board = resolveBoard(page.finalUrl) ?? resolveBoard(page.html);
+			}
+			if (!board) return { error: "No known ATS board at that URL." };
+			followCompany(userId, board.id);
+			return { ok: true, ats: board.ats, slug: board.slug };
 		},
 	});
 
-/** Scrape every board the user follows for postings not yet tracked. Bound to one user. */
-const checkNewPostingsTool = (userId: string) =>
+/** Scrape every board the user follows and report what's currently listed. Bound to one user. */
+const checkBoardsTool = (userId: string) =>
 	tool({
 		description:
-			"Check every company board the user follows for postings not yet tracked. Call when the user asks to check for new positions.",
+			"List every position currently open on the company boards the user follows. Call when the user asks what's open at the companies they track.",
 		inputSchema: z.object({}),
-		execute: async () => checkNewPostings(userId),
+		execute: async () => checkBoards(userId),
 	});
 
 /** Fetch a saved job posting's full description by id. Global, not user-scoped. */
@@ -108,5 +114,5 @@ export const jobsTools = (userId: string) => ({
 	list_jobs: listJobs(userId),
 	set_status: setJobStatus(userId),
 	follow_company: followCompanyTool(userId),
-	check_new_postings: checkNewPostingsTool(userId),
+	check_boards: checkBoardsTool(userId),
 });

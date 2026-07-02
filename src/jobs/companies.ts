@@ -13,7 +13,7 @@ function upsertBoard(ats: AtsName, slug: string): number {
 	return row.id;
 }
 
-/** Detect and persist the company board for a job URL, if the catalog recognizes it. */
+/** Detect and persist the company board for a job or careers-page URL, if the catalog recognizes it. */
 export function resolveBoard(
 	url: string,
 ): { id: number; ats: AtsName; slug: string } | undefined {
@@ -30,13 +30,6 @@ export function followCompany(userId: string, boardId: number): void {
 	);
 }
 
-export type NewPosting = {
-	url: string;
-	title: string;
-	ats: AtsName;
-	slug: string;
-};
-
 function followedBoards(
 	userId: string,
 ): { id: number; ats: AtsName; slug: string }[] {
@@ -49,55 +42,33 @@ function followedBoards(
 		.all(userId);
 }
 
-/** Close any tracked posting for this board that the fresh scrape no longer lists. */
-function closeMissing(boardId: number, liveUrls: Set<string>): void {
-	const tracked = db
-		.query<{ id: number; url: string }, [number]>(
-			"SELECT id, url FROM job_postings WHERE board_id = ? AND status = 'active'",
-		)
-		.all(boardId);
-	for (const job of tracked) {
-		if (!liveUrls.has(job.url))
-			db.run("UPDATE job_postings SET status = 'closed' WHERE id = ?", [
-				job.id,
-			]);
-	}
-}
-
-export type CheckResult = { fresh: NewPosting[]; failed: string[] };
+export type BoardPostings = {
+	ats: AtsName;
+	slug: string;
+	postings: { title: string; url: string }[];
+};
 
 /**
- * For each board the user follows: scrape its current postings, close any
- * previously-tracked posting no longer listed, and return the ones not yet tracked.
- * A board whose scrape throws is skipped (reported in `failed`) rather than
- * failing the whole check.
+ * Scrape every board the user follows and return what each currently lists.
+ * Stateless: no memory of past scrapes, no new/closed detection. A board whose
+ * scrape throws is reported in `failed` rather than failing the whole check.
  */
-export async function checkNewPostings(userId: string): Promise<CheckResult> {
-	const fresh: NewPosting[] = [];
+export async function checkBoards(
+	userId: string,
+): Promise<{ boards: BoardPostings[]; failed: string[] }> {
+	const boards: BoardPostings[] = [];
 	const failed: string[] = [];
 	for (const board of followedBoards(userId)) {
 		try {
 			const postings = await ATS[board.ats].source(board.slug);
-			const known = new Set(
-				db
-					.query<{ url: string }, [number]>(
-						"SELECT url FROM job_postings WHERE board_id = ?",
-					)
-					.all(board.id)
-					.map((r) => r.url),
-			);
-			for (const p of postings)
-				if (!known.has(p.url))
-					fresh.push({
-						url: p.url,
-						title: p.title,
-						ats: board.ats,
-						slug: board.slug,
-					});
-			closeMissing(board.id, new Set(postings.map((p) => p.url)));
+			boards.push({
+				ats: board.ats,
+				slug: board.slug,
+				postings: postings.map((p) => ({ title: p.title, url: p.url })),
+			});
 		} catch {
 			failed.push(board.slug);
 		}
 	}
-	return { fresh, failed };
+	return { boards, failed };
 }

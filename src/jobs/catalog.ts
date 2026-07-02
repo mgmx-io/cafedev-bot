@@ -28,9 +28,9 @@ export const ATS = {
 	// ─── jsonSource: single GET returning an array ───────────────────────────
 	greenhouse: {
 		match: [
+			/greenhouse\.io\/embed\/job_board\?(?:[^"'\s]*&)?for=([\w-]+)/i,
 			/boards-api\.greenhouse\.io\/v1\/boards\/([\w-]+)/i,
 			/(?:boards|job-boards)\.(?:eu\.)?greenhouse\.io\/([\w-]+)/i,
-			/greenhouse\.io\/embed\/job_board\?(?:[^"'\s]*&)?for=([\w-]+)/i,
 		],
 		source: jsonSource({
 			url: (slug) =>

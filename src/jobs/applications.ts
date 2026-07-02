@@ -13,13 +13,6 @@ export const STATUSES = [
 
 export type Status = (typeof STATUSES)[number];
 
-export type TrackedJob = {
-	job_id: number;
-	title: string;
-	status: Status;
-	fit: Fit | null;
-};
-
 /** Start tracking a job for a user (status 'considering'). Idempotent — won't reset an existing row. */
 export function track(userId: string, jobId: number): void {
 	db.run(
@@ -73,17 +66,4 @@ export function counts(userId: string): Counts {
 		.map((r) => [r.k, r.n] as [string, number]);
 	const total = status.reduce((sum, [, n]) => sum + n, 0);
 	return { total, status, fit };
-}
-
-/** Jobs the user is tracking, newest first. Joined with the posting for the injected index. */
-export function list(userId: string): TrackedJob[] {
-	return db
-		.query<TrackedJob, [string]>(
-			`SELECT a.job_id, j.title, a.status, a.fit
-			 FROM job_applications a
-			 JOIN job_postings j ON j.id = a.job_id
-			 WHERE a.user_id = ?
-			 ORDER BY a.id DESC`,
-		)
-		.all(userId);
 }

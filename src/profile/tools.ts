@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { addNote, recallNotes, removeNote } from "@/profile/notes";
+import { addNote, removeNote } from "@/profile/notes";
 
 /** Add a durable, self-contained note about the user. Bound to one user. */
 const addProfileNote = (userId: string) =>
@@ -40,22 +40,8 @@ const removeProfileNote = (userId: string) =>
 		execute: ({ id }) => ({ removed: removeNote(userId, id) }),
 	});
 
-/** Recall the full detail of specific notes by id. Bound to one user. */
-const recallProfileNotes = (userId: string) =>
-	tool({
-		description:
-			"Fetch the full detail of profile notes by id. Use when the injected index isn't enough — e.g. before writing a tailored CV or matching deeply against a job.",
-		inputSchema: z.object({
-			ids: z
-				.array(z.coerce.number().int().positive())
-				.describe("Ids of the notes to expand, taken from the index."),
-		}),
-		execute: ({ ids }) => ({ notes: recallNotes(userId, ids) }),
-	});
-
 /** The profile slice's tools, bound to one user. */
 export const profileTools = (userId: string) => ({
 	add_profile_note: addProfileNote(userId),
 	remove_profile_note: removeProfileNote(userId),
-	recall_profile_notes: recallProfileNotes(userId),
 });

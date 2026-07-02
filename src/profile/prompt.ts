@@ -1,6 +1,6 @@
 import { listNoteIndex } from "@/profile/notes";
 
-// ponytail: solo el índice de summaries va al prompt; el detalle se trae con recall_profile_notes.
+// ponytail: solo el índice de summaries va al prompt; el detalle se trae con query_db.
 /** The profile slice's prompt fragment for one user. */
 export function profilePrompt(userId: string): string {
 	const notes = listNoteIndex(userId);
@@ -9,5 +9,5 @@ export function profilePrompt(userId: string): string {
 	const lines = notes
 		.map((n) => `- [${n.id}] ${n.summary}${n.has_detail ? " >" : ""}`)
 		.join("\n");
-	return `Index of what you know about the user (summaries). Items marked > have fuller detail — call \`recall_profile_notes\` with their ids before relying on it or writing a tailored CV:\n${lines}`;
+	return `Index of what you know about the user (summaries). Items marked > have fuller detail — query_db their profile_notes.content by id before relying on it or writing a tailored CV:\n${lines}`;
 }

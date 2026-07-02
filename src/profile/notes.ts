@@ -6,13 +6,6 @@ export type NoteIndex = {
 	has_detail: number;
 };
 
-export type Note = {
-	id: number;
-	summary: string;
-	content: string | null;
-	created_at: string;
-};
-
 /** Index of active notes (summaries only), insertion order. Injected every turn. */
 export function listNoteIndex(userId: string): NoteIndex[] {
 	return db
@@ -20,17 +13,6 @@ export function listNoteIndex(userId: string): NoteIndex[] {
 			"SELECT id, summary, content IS NOT NULL AS has_detail FROM profile_notes WHERE user_id = ? AND removed_at IS NULL ORDER BY id",
 		)
 		.all(userId);
-}
-
-/** Full detail for specific notes. Scoped to user_id so a stray id can't read another user's notes. */
-export function recallNotes(userId: string, ids: number[]): Note[] {
-	if (ids.length === 0) return [];
-	const placeholders = ids.map(() => "?").join(", ");
-	return db
-		.query<Note, (string | number)[]>(
-			`SELECT id, summary, content, created_at FROM profile_notes WHERE user_id = ? AND removed_at IS NULL AND id IN (${placeholders})`,
-		)
-		.all(userId, ...ids);
 }
 
 /** Add a note: a short summary (the index line) and optional rich detail. Returns the new id. */

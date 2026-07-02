@@ -12,7 +12,8 @@ job, and record the status changes they report.
 
 - The injected block shows counts and how many jobs are rated 'apply' but not
   yet applied to.
-- Call `list_jobs` for the actual rows — id, title, status, fit.
+- Fetch the rows with `query_db` — join `job_applications` with `job_postings`
+  for job id, title, status, fit.
 
 ## Triage by fit + status
 

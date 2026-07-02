@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { list, STATUSES, setFit, setStatus, track } from "@/jobs/applications";
+import { STATUSES, setFit, setStatus, track } from "@/jobs/applications";
 import { checkBoards, followCompany, resolveBoard } from "@/jobs/companies";
-import { getJob, saveJob } from "@/jobs/store";
+import { saveJob } from "@/jobs/store";
 import { extract } from "@/jobs/webview";
 import { normalizeUrl } from "@/lib/url";
 
@@ -54,19 +54,6 @@ const checkBoardsTool = (userId: string) =>
 		execute: async () => checkBoards(userId),
 	});
 
-/** Fetch a saved job posting's full description by id. Global, not user-scoped. */
-const recallJob = tool({
-	description:
-		"Fetch a saved job posting's full description by id. Use before evaluating how it fits the user.",
-	inputSchema: z.object({ id: z.number().int().positive() }),
-	execute: ({ id }) => {
-		const job = getJob(id);
-		return job
-			? { title: job.title, content: job.content }
-			: { error: `No job with id ${id}.` };
-	},
-});
-
 /** Record a job-fit verdict for the user. Bound to one user. */
 const recordFit = (userId: string) =>
 	tool({
@@ -80,15 +67,6 @@ const recordFit = (userId: string) =>
 			setFit(userId, job_id, fit);
 			return { ok: true };
 		},
-	});
-
-/** List the jobs the user is tracking. Bound to one user. */
-const listJobs = (userId: string) =>
-	tool({
-		description:
-			"List the jobs the user is tracking — id, title, status, and fit. Use when they ask about a job they saved earlier.",
-		inputSchema: z.object({}),
-		execute: () => ({ jobs: list(userId) }),
 	});
 
 /** Update a tracked job's lifecycle status. Bound to one user. */
@@ -109,9 +87,7 @@ const setJobStatus = (userId: string) =>
 /** The jobs slice's tools, bound to one user. */
 export const jobsTools = (userId: string) => ({
 	ingest_job: ingestJob(userId),
-	recall_job: recallJob,
 	record_fit: recordFit(userId),
-	list_jobs: listJobs(userId),
 	set_status: setJobStatus(userId),
 	follow_company: followCompanyTool(userId),
 	check_boards: checkBoardsTool(userId),

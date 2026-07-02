@@ -14,11 +14,12 @@ Rank how well a saved job posting fits the user. Fit is two matches, not one:
 
 ## Gather
 
-1. **The JD.** Call `recall_job` with the posting's id (you got it from
-   `ingest_job` earlier this conversation, or re-ingest the link to get it).
-   This returns the full description.
+1. **The JD.** Fetch the full description with `query_db`: `SELECT title,
+   content FROM job_postings WHERE id = ?` (you got the id from `ingest_job`
+   earlier this conversation, or re-ingest the link to get it).
 2. **The profile.** The injected index lists what you know about the user. Pick
-   the ids relevant to this role and call `recall_profile_notes` to expand them.
+   the ids relevant to this role and expand them with `query_db`: `SELECT id,
+   summary, content FROM profile_notes WHERE id IN (...)`.
    If the profile is thin, say so — a fit ranking on no evidence is a guess.
 
 ## Analyze

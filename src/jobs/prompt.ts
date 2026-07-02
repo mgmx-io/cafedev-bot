@@ -11,7 +11,7 @@ export function jobsPrompt(userId: string): string {
 		`Tracked jobs: ${total}`,
 		`  status — ${fmt(status)}`,
 		`  fit    — ${fmt(fit)}`,
-		"→ call list_jobs to see them",
+		"→ query_db joins job_applications with job_postings for the rows",
 	];
 	return lines.join("\n");
 }

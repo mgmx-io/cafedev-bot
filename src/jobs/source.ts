@@ -31,6 +31,7 @@ function source(map: Map, pages: Pages): Source {
 		const seen = new Set<string>();
 		const out: Posting[] = [];
 		for await (const items of pages(slug)) {
+			const before = out.length;
 			for (const item of items) {
 				const job = map(item, slug);
 				if (!job.id || !job.url) continue;
@@ -38,6 +39,9 @@ function source(map: Map, pages: Pages): Source {
 				seen.add(job.id);
 				out.push({ id: job.id, url: job.url, title: job.title ?? "" });
 			}
+			// some ATSes (Workday) never return an empty page: past the total
+			// they wrap around and re-serve earlier postings, looping forever
+			if (out.length === before) break;
 		}
 		return out;
 	};

@@ -5,5 +5,5 @@ export function skillsPrompt(): string {
 	const skills = listSkills();
 	if (!skills.length) return "";
 	const lines = skills.map((s) => `- ${s.name}: ${s.description}`).join("\n");
-	return `Coaching skills — call \`load_skill\` with the name to get the full playbook before doing one of these:\n${lines}`;
+	return `Playbooks for common jobs — call \`load_skill\` for the full guide when one applies:\n${lines}`;
 }

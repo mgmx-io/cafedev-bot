@@ -48,7 +48,7 @@ Rank how well a saved job posting fits the user. Fit is two matches, not one:
 ## Verdict
 
 No numeric score — an LLM's 1-5 is false precision. Give one of three calls,
-grounded in the two tables and which gaps are blockers:
+grounded in the two mappings and which gaps are blockers:
 
 - **Apply** — covers the must-have requirements AND the offer fits what the user
   wants.
@@ -66,8 +66,10 @@ seniority, unrealistic asks) pull the verdict down.
 Give it in the message:
 
 - One-line role shape + the **verdict** (Apply / Stretch / Skip)
-- **Capability** table (need → evidence/note id → covered/partial/gap)
-- **Desirability** table (offer → want/note id → met/partial/missing/conflict)
+- **Capability**: one line per real requirement — ✅ covered / ⚠️ partial / 🔴 gap,
+  with the evidence. Never a table.
+- **Desirability**: same, one line per offer-vs-want — ✅ met / ⚠️ partial / 🔴
+  missing or conflict.
 - Top 2-3 gaps or conflicts with mitigation
 - A one-line reason for the verdict
 

@@ -14,17 +14,12 @@ for the recruiter: `Jane-Doe-CV-Acme.pdf`.
 
 ## Format
 
-Write the CV in markdown, plain ASCII punctuation throughout — no em dashes,
-smart quotes, arrows, tables, images, or emoji. ATS parsers read plain text.
-
-- `#` the user's name, then one line: email | city | relevant links.
-- `##` per section, named what parsers expect: Summary, Core Competencies,
-  Work Experience, Projects, Education, Skills, Certifications — in that
-  order, only the ones the profile supports, reverse chronological.
-- Each role: `### Company - Role`, next line `*dates | location*`, then 2-5
-  bullets.
-- Skills and competencies as `**Label:** item, item` lines.
-- One page under ~10 years of experience, two max. Cut oldest roles first.
+- Sections named what parsers expect: Summary, Core Competencies, Work
+  Experience, Projects, Education, Skills, Certifications — in that order,
+  only the ones the profile supports, reverse chronological.
+- Each role: title `Company - Role`, dates and location, then 2-5 bullets.
+- One page under ~10 years of experience, two max — send_cv returns the page
+  count, so trim and resend if over. Cut oldest roles first.
 
 ## Keywords
 

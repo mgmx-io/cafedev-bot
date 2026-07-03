@@ -11,7 +11,9 @@ console.log("→ migrate");
 await $`bun scripts/migrate.ts`;
 
 console.log("→ restart service");
-const pid = (await $`systemctl show -p MainPID cafedev-bot --value`.text()).trim();
+const pid = (
+	await $`systemctl show -p MainPID cafedev-bot --value`.text()
+).trim();
 if (pid !== "0") {
 	await $`kill -TERM ${pid}`;
 }

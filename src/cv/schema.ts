@@ -2,9 +2,20 @@ import { z } from "zod";
 
 const entrySchema = z.object({
 	title: z.string().describe("E.g. 'Acme - Senior Engineer' or a degree."),
-	dates: z.string().optional(),
-	location: z.string().optional(),
-	bullets: z.array(z.string()).optional(),
+	dates: z
+		.string()
+		.optional()
+		.describe(
+			"Month-year range, e.g. 'Jan 2020 - Mar 2023' or 'Jan 2020 - Present'.",
+		),
+	location: z
+		.string()
+		.optional()
+		.describe("E.g. 'Berlin, Germany' or 'Remote'."),
+	bullets: z
+		.array(z.string())
+		.optional()
+		.describe("One achievement per bullet, starting with an action verb."),
 });
 
 const sectionSchema = z.object({
@@ -17,17 +28,20 @@ const sectionSchema = z.object({
 		.optional()
 		.describe("Dated entries: roles, projects, education, certifications."),
 	lines: z
-		.array(z.object({ label: z.string(), text: z.string() }))
+		.array(
+			z.object({
+				label: z.string().describe("E.g. 'Languages'."),
+				text: z
+					.string()
+					.describe("Comma-separated items, e.g. 'TypeScript, Go, SQL'."),
+			}),
+		)
 		.optional()
 		.describe("'Label: item, item' lines for Skills or Core Competencies."),
 });
 
 const contactSchema = z.object({
-	text: z
-		.string()
-		.describe(
-			"Visible text; for links a readable URL, e.g. 'linkedin.com/in/jane'.",
-		),
+	text: z.string().describe("Visible text."),
 	url: z
 		.string()
 		.optional()
@@ -37,11 +51,13 @@ const contactSchema = z.object({
 // The CV as its three ATS-safe typographic shapes: dated entries, labeled lines, paragraphs.
 export const cvSchema = z.object({
 	lang: z.string().describe("CV language as a BCP 47 tag, e.g. 'en', 'es'."),
-	name: z.string(),
+	name: z.string().describe("Full name, plain text."),
 	tagline: z
 		.string()
 		.optional()
-		.describe("One line under the name, e.g. 'Senior Backend Engineer'."),
+		.describe(
+			"Target job title under the name, e.g. 'Senior Backend Engineer'.",
+		),
 	contacts: z
 		.array(contactSchema)
 		.min(1)

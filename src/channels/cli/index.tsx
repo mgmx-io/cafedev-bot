@@ -1,6 +1,13 @@
 import { render, Static, Text, useInput, usePaste } from "ink";
 import { Fragment, useRef, useState } from "react";
+import { registerDocumentDelivery } from "@/chat/deliver";
 import { handleIncoming } from "@/chat/handle";
+
+registerDocumentDelivery("cli", async (_user, filename, data) => {
+	const path = `data/${filename}`;
+	await Bun.write(path, data);
+	return path;
+});
 
 function Chat() {
 	const [log, setLog] = useState<{ id: number; line: string }[]>([]);

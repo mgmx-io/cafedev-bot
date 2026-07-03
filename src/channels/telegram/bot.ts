@@ -4,8 +4,9 @@ import {
 	autoChatAction,
 } from "@grammyjs/auto-chat-action";
 import { autoRetry } from "@grammyjs/auto-retry";
-import { Bot, type Context, type Filter } from "grammy";
+import { Bot, type Context, type Filter, InputFile } from "grammy";
 import type { MessageEntity } from "grammy/types";
+import { registerDocumentDelivery } from "@/chat/deliver";
 import { handleIncoming } from "@/chat/handle";
 import { TELEGRAM_BOT_TOKEN } from "@/lib/env";
 
@@ -49,5 +50,10 @@ async function respond(
 	const reply = markdownToFormattable(text);
 	await ctx.reply(reply.text, { entities: reply.entities as MessageEntity[] });
 }
+
+registerDocumentDelivery("telegram", async (chatId, filename, data) => {
+	await bot.api.sendDocument(Number(chatId), new InputFile(data, filename));
+	return "sent as a chat attachment";
+});
 
 await bot.init();

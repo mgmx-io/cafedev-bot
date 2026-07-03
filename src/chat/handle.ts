@@ -19,11 +19,9 @@ class Conversation {
 	}
 
 	private async chat(content: string, userId: string): Promise<string> {
-		const { channel, channelUserId } = this.sender;
-		const sessionId = `${channel}:${channelUserId}`;
 		const userMsg: ModelMessage = { role: "user", content };
 		const history = [...loadContext(this.sender), userMsg];
-		const { text, responseMessages } = await run(history, userId, sessionId);
+		const { text, responseMessages } = await run(history, userId, this.sender);
 		saveContext(this.sender, [...history, ...responseMessages]);
 		return text;
 	}

@@ -1,4 +1,5 @@
-import type { Cv, Entry, Section } from "@/cv/schema";
+import type { Contact, Cv, Entry, Section } from "@/cv/schema";
+import CSS from "@/cv/styles.css" with { type: "text" };
 
 /** Typographic Unicode to ASCII — ATS parsers garble it into mojibake or split words. */
 function normalizeForAts(text: string): string {
@@ -25,8 +26,39 @@ const ESCAPES: Record<string, string> = {
 };
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ESCAPES[c] ?? c);
 
-/** Normalized and escaped: every text value passes through here. */
-const t = (s: string) => esc(normalizeForAts(s));
+/** Rendered markup; interpolating it into html`` skips escaping. */
+class Html {
+	constructor(readonly s: string) {}
+}
+
+/** Escapes every interpolated value; Html fragments (and arrays of them) pass through raw. */
+function html(strings: TemplateStringsArray, ...values: unknown[]): Html {
+	const render = (v: unknown): string =>
+		v == null || v === false
+			? ""
+			: v instanceof Html
+				? v.s
+				: Array.isArray(v)
+					? v.map(render).join("")
+					: esc(String(v));
+	return new Html(
+		strings.reduce((acc, s, i) => acc + render(values[i - 1]) + s),
+	);
+}
+
+/** normalizeForAts over every string in the CV; URLs pass through untouched. */
+function normalizeDeep<T>(v: T): T {
+	if (typeof v === "string") return normalizeForAts(v) as T;
+	if (Array.isArray(v)) return v.map(normalizeDeep) as T;
+	if (v && typeof v === "object")
+		return Object.fromEntries(
+			Object.entries(v).map(([k, x]) => [
+				k,
+				k === "url" ? x : normalizeDeep(x),
+			]),
+		) as T;
+	return v;
+}
 
 function sanitizeUrl(url: string): string {
 	const u = url.trim();
@@ -34,61 +66,39 @@ function sanitizeUrl(url: string): string {
 	return u.includes("@") && !u.includes("/") ? `mailto:${u}` : `https://${u}`;
 }
 
-// Generic tags + static system fonts: variable webfonts make PDF extractors
-// inject spurious spaces inside words, corrupting ATS keyword parsing.
-const CSS = `
-	body { font: 11px/1.45 'Liberation Sans', 'Helvetica Neue', Arial, sans-serif; color: #1a1a2e; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-	h1 { font-size: 26px; margin: 0 0 2px; letter-spacing: -0.02em; }
-	.tagline, .contacts { color: #555; margin: 0; }
-	.contacts { margin-bottom: 14px; }
-	h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: hsl(187, 74%, 32%); border-bottom: 1.5px solid #e2e2e2; padding-bottom: 3px; margin: 14px 0 8px; }
-	h3 { font-size: 11.5px; margin: 10px 0 4px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-	h3 em { font-weight: 400; font-size: 11px; color: #555; white-space: nowrap; }
-	p { margin: 6px 0; }
-	.line { margin: 3px 0; }
-	ul { margin: 4px 0; padding-left: 16px; }
-	li { margin: 2px 0; }
-	a { color: #0b5394; text-decoration: none; white-space: nowrap; }
-	.entry { break-inside: avoid; }
-`;
-
-function entryHtml(e: Entry): string {
-	const meta = [e.dates, e.location]
-		.flatMap((v) => (v ? [t(v)] : []))
-		.join(" | ");
-	const bullets = e.bullets?.length
-		? `<ul>${e.bullets.map((b) => `<li>${t(b)}</li>`).join("")}</ul>`
-		: "";
-	return `<div class="entry"><h3><span>${t(e.title)}</span>${meta ? `<em>${meta}</em>` : ""}</h3>${bullets}</div>`;
+function contactHtml(c: Contact): Html {
+	return c.url
+		? html`<a href="${sanitizeUrl(c.url)}">${c.text}</a>`
+		: html`${c.text}`;
 }
 
-function sectionHtml(s: Section): string {
-	return [
-		`<h2>${t(s.heading)}</h2>`,
-		s.text ? `<p>${t(s.text)}</p>` : "",
-		...(s.entries ?? []).map(entryHtml),
-		...(s.lines ?? []).map(
-			(l) => `<p class="line"><strong>${t(l.label)}:</strong> ${t(l.text)}</p>`,
-		),
-	].join("");
+function entryHtml(e: Entry): Html {
+	const meta = [e.dates, e.location].filter(Boolean).join(" | ");
+	return html`<div class="entry">
+		<h3><span>${e.title}</span>${meta && html`<em>${meta}</em>`}</h3>
+		${e.bullets?.length ? html`<ul>${e.bullets.map((b) => html`<li>${b}</li>`)}</ul>` : ""}
+	</div>`;
+}
+
+function sectionHtml(s: Section): Html {
+	return html`<h2>${s.heading}</h2>
+		${s.text && html`<p>${s.text}</p>`}
+		${(s.entries ?? []).map(entryHtml)}
+		${(s.lines ?? []).map((l) => html`<p class="line"><strong>${l.label}:</strong> ${l.text}</p>`)}`;
 }
 
 /** The full HTML document for a CV; renderCvPdf prints exactly this. */
 export function cvHtml(cv: Cv): string {
-	const contacts = cv.contacts
-		.map((c) =>
-			c.url
-				? `<a href="${esc(sanitizeUrl(c.url))}">${t(c.text)}</a>`
-				: t(c.text),
-		)
-		.join(" | ");
-	const body = [
-		`<h1>${t(cv.name)}</h1>`,
-		cv.tagline ? `<p class="tagline">${t(cv.tagline)}</p>` : "",
-		`<p class="contacts">${contacts}</p>`,
-		...cv.sections.map(sectionHtml),
-	].join("");
-	return `<!doctype html><html lang="${esc(cv.lang)}"><head><meta charset="utf-8"><style>${CSS}</style></head><body>${body}</body></html>`;
+	const c = normalizeDeep(cv);
+	const contacts = c.contacts
+		.map(contactHtml)
+		.reduce((a, b) => html`${a} | ${b}`);
+	return html`<!doctype html><html lang="${c.lang}"><head><meta charset="utf-8"><style>${new Html(CSS)}</style></head><body>
+		<h1>${c.name}</h1>
+		${c.tagline && html`<p class="tagline">${c.tagline}</p>`}
+		<p class="contacts">${contacts}</p>
+		${c.sections.map(sectionHtml)}
+	</body></html>`.s;
 }
 
 /** Render a structured CV to an ATS-safe, single-column A4 PDF. */
@@ -105,12 +115,7 @@ export async function renderCvPdf(
 		);
 		const { data } = (await view.cdp("Page.printToPDF", {
 			printBackground: true,
-			marginTop: 0.6,
-			marginBottom: 0.6,
-			marginLeft: 0.6,
-			marginRight: 0.6,
-			paperWidth: 8.27,
-			paperHeight: 11.69,
+			preferCSSPageSize: true,
 		})) as { data: string };
 		const pdf = Buffer.from(data, "base64");
 		const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || [])

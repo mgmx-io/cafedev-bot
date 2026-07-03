@@ -42,7 +42,10 @@ export const cvSchema = z.object({
 		.string()
 		.optional()
 		.describe("One line under the name, e.g. 'Senior Backend Engineer'."),
-	contacts: z.array(contactSchema).describe("Email, city, relevant links."),
+	contacts: z
+		.array(contactSchema)
+		.min(1)
+		.describe("Email, city, relevant links."),
 	sections: z
 		.array(sectionSchema)
 		.describe(
@@ -51,5 +54,6 @@ export const cvSchema = z.object({
 });
 
 export type Cv = z.infer<typeof cvSchema>;
+export type Contact = z.infer<typeof contactSchema>;
 export type Entry = z.infer<typeof entrySchema>;
 export type Section = z.infer<typeof sectionSchema>;

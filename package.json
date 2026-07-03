@@ -28,6 +28,7 @@
 		"@langfuse/tracing": "^5.9.0",
 		"@langfuse/vercel-ai-sdk": "^5.9.0",
 		"@opentelemetry/sdk-node": "^0.219.0",
+		"@tavily/ai-sdk": "^0.5.0",
 		"ai": "^7.0.2",
 		"better-auth": "^1.6.22",
 		"grammy": "^1.44.0",

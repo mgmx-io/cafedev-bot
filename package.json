@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "bun run --hot src/index.ts",
 		"deploy": "bun scripts/deploy.ts",
+		"migrate": "bun scripts/migrate.ts",
 		"cli": "bun run src/channels/cli/index.tsx",
 		"lint": "biome check",
 		"format": "biome check --write",

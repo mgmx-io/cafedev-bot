@@ -95,7 +95,9 @@ export function cvHtml(cv: Cv): string {
 export async function renderCvPdf(
 	cv: Cv,
 ): Promise<{ pdf: Uint8Array; pages: number }> {
-	const view = new Bun.WebView({ backend: "chrome" });
+	const view = new Bun.WebView({
+		backend: { type: "chrome", argv: ["--no-sandbox"] },
+	});
 
 	try {
 		await view.navigate(

@@ -6,6 +6,7 @@ import {
 import { autoRetry } from "@grammyjs/auto-retry";
 import { Bot, type Context, type Filter, InputFile } from "grammy";
 import type { MessageEntity } from "grammy/types";
+import { extractText, getDocumentProxy } from "unpdf";
 import { registerDocumentDelivery } from "@/chat/deliver";
 import { handleIncoming } from "@/chat/handle";
 import { TELEGRAM_BOT_TOKEN } from "@/lib/env";
@@ -37,10 +38,30 @@ bot.on("message:text", async (ctx) => {
 	await respond(ctx, content);
 });
 
-async function respond(
-	ctx: Filter<BotContext, "message:text">,
-	content: string,
-) {
+bot.on("message:document", async (ctx) => {
+	ctx.chatAction = "typing";
+	const { file_name, mime_type } = ctx.message.document;
+	let text = "";
+	if (mime_type === "application/pdf") {
+		const file = await ctx.getFile();
+		const bytes = await (
+			await fetch(
+				`https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${file.file_path}`,
+			)
+		).arrayBuffer();
+		({ text } = await extractText(await getDocumentProxy(bytes), {
+			mergePages: true,
+		}));
+	}
+	// ponytail: 20k-char cap guards against rogue huge PDFs; CVs never get close
+	const content = `[attachment "${file_name ?? "document"}"]\n${
+		text.trim().slice(0, 20_000) ||
+		"(unreadable — only text PDFs are supported)"
+	}`;
+	await respond(ctx, [ctx.message.caption, content].filter(Boolean).join("\n"));
+});
+
+async function respond(ctx: Filter<BotContext, "message">, content: string) {
 	ctx.chatAction = "typing";
 	const { text } = await handleIncoming({
 		channel: "telegram",

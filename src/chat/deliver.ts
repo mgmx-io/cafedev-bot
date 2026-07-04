@@ -24,3 +24,19 @@ export function deliverDocument(
 		throw new Error(`Channel '${sender.channel}' cannot deliver documents.`);
 	return deliver(sender.channelUserId, filename, data);
 }
+
+type DeliverProgress = (channelUserId: string, text: string) => Promise<void>;
+
+const progressChannels = new Map<string, DeliverProgress>();
+
+/** Called by each channel at startup to plug in its progress notes. */
+export function registerProgressDelivery(channel: string, fn: DeliverProgress) {
+	progressChannels.set(channel, fn);
+}
+
+/** Fire-and-forget a short progress note; channels without delivery drop it. */
+export function deliverProgress(sender: Sender, text: string) {
+	progressChannels
+		.get(sender.channel)?.(sender.channelUserId, text)
+		.catch(() => {});
+}

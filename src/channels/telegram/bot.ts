@@ -7,7 +7,10 @@ import { autoRetry } from "@grammyjs/auto-retry";
 import { Bot, type Context, type Filter, InputFile } from "grammy";
 import type { MessageEntity } from "grammy/types";
 import { extractText, getDocumentProxy } from "unpdf";
-import { registerDocumentDelivery } from "@/chat/deliver";
+import {
+	registerDocumentDelivery,
+	registerProgressDelivery,
+} from "@/chat/deliver";
 import { handleIncoming } from "@/chat/handle";
 import { TELEGRAM_BOT_TOKEN } from "@/lib/env";
 
@@ -71,6 +74,12 @@ async function respond(ctx: Filter<BotContext, "message">, content: string) {
 	const reply = markdownToFormattable(text);
 	await ctx.reply(reply.text, { entities: reply.entities as MessageEntity[] });
 }
+
+registerProgressDelivery("telegram", async (chatId, text) => {
+	await bot.api.sendMessage(Number(chatId), text, {
+		entities: [{ type: "italic", offset: 0, length: text.length }],
+	});
+});
 
 registerDocumentDelivery("telegram", async (chatId, filename, data) => {
 	await bot.api.sendDocument(Number(chatId), new InputFile(data, filename));

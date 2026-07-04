@@ -8,12 +8,6 @@ import { profileTools } from "@/profile/tools";
 import { researchTools } from "@/research/tools";
 import { skillsTools } from "@/skills/tools";
 
-// ponytail: first string value as arg preview; per-tool formatting if it reads badly
-const preview = (input: unknown) => {
-	const first = Object.values(input ?? {}).find((v) => typeof v === "string");
-	return typeof first === "string" ? first.slice(0, 60) : "";
-};
-
 /** Announce each tool call on the sender's channel just before it runs. */
 function withProgress(tools: ToolSet, sender: Sender): ToolSet {
 	return Object.fromEntries(
@@ -23,7 +17,7 @@ function withProgress(tools: ToolSet, sender: Sender): ToolSet {
 			const wrapped: Tool = {
 				...t,
 				execute: (input, options) => {
-					deliverProgress(sender, `⚙️ ${name}(${preview(input)})`);
+					deliverProgress(sender, `⚙️ ${name}`);
 					return execute(input, options);
 				},
 			};

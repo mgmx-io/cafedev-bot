@@ -17,6 +17,14 @@ export function loadContext({
 	return row ? JSON.parse(row.messages) : [];
 }
 
+/** Drop the thread's context so the next message starts fresh. */
+export function clearContext({ channel, channelUserId }: Sender): void {
+	db.run(
+		"DELETE FROM conversation_context WHERE channel = ? AND channel_user_id = ?",
+		[channel, channelUserId],
+	);
+}
+
 /** Group messages into turns: each starts at a user message and holds the assistant/tool replies until the next. */
 function toTurns(messages: ModelMessage[]): ModelMessage[][] {
 	const turns: ModelMessage[][] = [];

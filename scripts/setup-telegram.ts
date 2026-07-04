@@ -14,3 +14,16 @@ const res = await fetch(
 );
 
 console.log(await res.text());
+
+const commands = await fetch(
+	`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands`,
+	{
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({
+			commands: [{ command: "new", description: "Start a fresh conversation" }],
+		}),
+	},
+);
+
+console.log(await commands.text());

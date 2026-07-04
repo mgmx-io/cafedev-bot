@@ -7,6 +7,7 @@ import { autoRetry } from "@grammyjs/auto-retry";
 import { Bot, type Context, type Filter, InputFile } from "grammy";
 import type { MessageEntity } from "grammy/types";
 import { extractText, getDocumentProxy } from "unpdf";
+import { clearContext } from "@/chat/context";
 import {
 	registerDocumentDelivery,
 	registerProgressDelivery,
@@ -24,6 +25,12 @@ const chats = new Map<number, Chat>();
 bot.api.config.use(autoRetry());
 bot.use(autoChatAction());
 bot.catch((err) => console.error("telegram bot error:", err));
+
+bot.command("new", async (ctx) => {
+	if (!ctx.from) return;
+	clearContext({ channel: "telegram", channelUserId: String(ctx.from.id) });
+	await ctx.reply("Fresh start.");
+});
 
 bot.on("message:text", async (ctx) => {
 	let chat = chats.get(ctx.chat.id);

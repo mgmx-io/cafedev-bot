@@ -11,7 +11,6 @@ export const auth = betterAuth({
 	database: db,
 	secret: BETTER_AUTH_SECRET,
 	baseURL: BETTER_AUTH_URL,
-	account: { skipStateCookieCheck: true },
 	socialProviders: {
 		google: {
 			clientId: GOOGLE_CLIENT_ID,

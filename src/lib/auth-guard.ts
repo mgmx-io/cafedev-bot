@@ -1,5 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import { auth } from "@/lib/auth";
+import { BETTER_AUTH_URL } from "@/lib/env";
 
 export const requireAuth = createMiddleware<{ Variables: { userId: string } }>(
 	async (c, next) => {
@@ -9,7 +10,10 @@ export const requireAuth = createMiddleware<{ Variables: { userId: string } }>(
 			return next();
 		}
 		const { headers, response } = await auth.api.signInSocial({
-			body: { provider: "google", callbackURL: c.req.url },
+			body: {
+				provider: "google",
+				callbackURL: BETTER_AUTH_URL + new URL(c.req.url).pathname,
+			},
 			returnHeaders: true,
 		});
 		if (!response.url) return c.text("No se pudo iniciar el login", 500);

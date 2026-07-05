@@ -13,6 +13,7 @@ import {
 	registerProgressDelivery,
 } from "@/chat/deliver";
 import { handleIncoming } from "@/chat/handle";
+import { deleteUser, resolveIdentity } from "@/identity/service";
 import { TELEGRAM_BOT_TOKEN } from "@/lib/env";
 
 type BotContext = Context & AutoChatActionFlavor;
@@ -30,6 +31,29 @@ bot.command("new", async (ctx) => {
 	if (!ctx.from) return;
 	clearContext({ channel: "telegram", channelUserId: String(ctx.from.id) });
 	await ctx.reply("Fresh start.");
+});
+
+bot.command("destroy", async (ctx) => {
+	if (!ctx.from) return;
+	const userId = resolveIdentity({
+		channel: "telegram",
+		channelUserId: String(ctx.from.id),
+	});
+	if (!userId) {
+		await ctx.reply(
+			"Nothing to delete — this chat isn't linked to an account.",
+		);
+		return;
+	}
+	const code = userId.slice(-4); // ponytail: código de confirmación stateless, derivado del id
+	if (ctx.match.toLowerCase() !== code.toLowerCase()) {
+		await ctx.reply(
+			`This permanently erases your account: profile, applications, follows and this conversation. Send /destroy ${code} to proceed.`,
+		);
+		return;
+	}
+	deleteUser(userId);
+	await ctx.reply("Done. Everything is gone.");
 });
 
 bot.on("message:text", async (ctx) => {

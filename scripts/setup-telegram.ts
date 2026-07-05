@@ -21,7 +21,13 @@ const commands = await fetch(
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({
-			commands: [{ command: "new", description: "Start a fresh conversation" }],
+			commands: [
+				{ command: "new", description: "Start a fresh conversation" },
+				{
+					command: "destroy",
+					description: "Erase your account and all its data",
+				},
+			],
 		}),
 	},
 );

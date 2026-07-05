@@ -8,10 +8,7 @@ import { Bot, type Context, type Filter, InputFile } from "grammy";
 import type { MessageEntity } from "grammy/types";
 import { extractText, getDocumentProxy } from "unpdf";
 import { clearContext } from "@/chat/context";
-import {
-	registerDocumentDelivery,
-	registerProgressDelivery,
-} from "@/chat/deliver";
+import { registerDelivery } from "@/chat/deliver";
 import { handleIncoming } from "@/chat/handle";
 import { deleteUser, resolveIdentity } from "@/identity/service";
 import { TELEGRAM_BOT_TOKEN } from "@/lib/env";
@@ -106,15 +103,22 @@ async function respond(ctx: Filter<BotContext, "message">, content: string) {
 	await ctx.reply(reply.text, { entities: reply.entities as MessageEntity[] });
 }
 
-registerProgressDelivery("telegram", async (chatId, text) => {
-	await bot.api.sendMessage(Number(chatId), text, {
-		entities: [{ type: "italic", offset: 0, length: text.length }],
-	});
-});
-
-registerDocumentDelivery("telegram", async (chatId, filename, data) => {
-	await bot.api.sendDocument(Number(chatId), new InputFile(data, filename));
-	return "sent as a chat attachment";
+registerDelivery("telegram", {
+	message: async (chatId, text) => {
+		const reply = markdownToFormattable(text);
+		await bot.api.sendMessage(Number(chatId), reply.text, {
+			entities: reply.entities as MessageEntity[],
+		});
+	},
+	progress: async (chatId, text) => {
+		await bot.api.sendMessage(Number(chatId), text, {
+			entities: [{ type: "italic", offset: 0, length: text.length }],
+		});
+	},
+	document: async (chatId, filename, data) => {
+		await bot.api.sendDocument(Number(chatId), new InputFile(data, filename));
+		return "sent as a chat attachment";
+	},
 });
 
 await bot.init();

@@ -1,17 +1,17 @@
 import type { Sender } from "@/identity/service";
 
+type OutText = { channelUserId: string; text: string };
+
+type OutDoc = { channelUserId: string; filename: string; data: Uint8Array };
+
 /** What a channel can deliver outbound, keyed by the channel's own user id. */
 type Delivery = {
 	/** A mid-turn chat message, formatted like any bot reply. */
-	message?: (channelUserId: string, text: string) => Promise<void>;
+	message?: (msg: OutText) => Promise<void>;
 	/** A short progress note (e.g. which tool is running). */
-	progress?: (channelUserId: string, text: string) => Promise<void>;
+	progress?: (note: OutText) => Promise<void>;
 	/** A file; returns a user-facing receipt of where it went. */
-	document?: (
-		channelUserId: string,
-		filename: string,
-		data: Uint8Array,
-	) => Promise<string>;
+	document?: (doc: OutDoc) => Promise<string>;
 };
 
 const channels = new Map<string, Delivery>();
@@ -25,16 +25,16 @@ export function registerDelivery(channel: string, delivery: Delivery) {
 export function deliverMessage(sender: Sender, text: string) {
 	channels
 		.get(sender.channel)
-		?.message?.(sender.channelUserId, text)
-		.catch(() => {});
+		?.message?.({ channelUserId: sender.channelUserId, text })
+		.catch((err) => console.error("deliverMessage failed:", err));
 }
 
 /** Fire-and-forget a short progress note; channels without delivery drop it. */
 export function deliverProgress(sender: Sender, text: string) {
 	channels
 		.get(sender.channel)
-		?.progress?.(sender.channelUserId, text)
-		.catch(() => {});
+		?.progress?.({ channelUserId: sender.channelUserId, text })
+		.catch((err) => console.error("deliverProgress failed:", err));
 }
 
 /** Deliver a document on the sender's channel. Returns a user-facing receipt. */
@@ -46,5 +46,5 @@ export function deliverDocument(
 	const deliver = channels.get(sender.channel)?.document;
 	if (!deliver)
 		throw new Error(`Channel '${sender.channel}' cannot deliver documents.`);
-	return deliver(sender.channelUserId, filename, data);
+	return deliver({ channelUserId: sender.channelUserId, filename, data });
 }

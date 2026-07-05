@@ -104,19 +104,22 @@ async function respond(ctx: Filter<BotContext, "message">, content: string) {
 }
 
 registerDelivery("telegram", {
-	message: async (chatId, text) => {
+	message: async ({ channelUserId, text }) => {
 		const reply = markdownToFormattable(text);
-		await bot.api.sendMessage(Number(chatId), reply.text, {
+		await bot.api.sendMessage(Number(channelUserId), reply.text, {
 			entities: reply.entities as MessageEntity[],
 		});
 	},
-	progress: async (chatId, text) => {
-		await bot.api.sendMessage(Number(chatId), text, {
+	progress: async ({ channelUserId, text }) => {
+		await bot.api.sendMessage(Number(channelUserId), text, {
 			entities: [{ type: "italic", offset: 0, length: text.length }],
 		});
 	},
-	document: async (chatId, filename, data) => {
-		await bot.api.sendDocument(Number(chatId), new InputFile(data, filename));
+	document: async ({ channelUserId, filename, data }) => {
+		await bot.api.sendDocument(
+			Number(channelUserId),
+			new InputFile(data, filename),
+		);
 		return "sent as a chat attachment";
 	},
 });

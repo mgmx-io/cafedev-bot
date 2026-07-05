@@ -1,6 +1,5 @@
 import { render, Static, Text, useInput, usePaste } from "ink";
 import { Fragment, useRef, useState } from "react";
-import { registerDelivery } from "@/chat/deliver";
 import { handleIncoming } from "@/chat/handle";
 
 function Chat() {
@@ -16,17 +15,6 @@ function Chat() {
 
 	const add = (line: string) =>
 		setLog((l) => [...l, { id: id.current++, line }]);
-
-	// re-registers on every render; the Map.set overwrite makes that a no-op
-	registerDelivery("cli", {
-		message: async (_user, text) => add(`[bot] ${text}`),
-		progress: async (_user, text) => add(`[..] ${text}`),
-		document: async (_user, filename, data) => {
-			const path = `data/${filename}`;
-			await Bun.write(path, data);
-			return path;
-		},
-	});
 
 	async function submit() {
 		const content = input.trim();

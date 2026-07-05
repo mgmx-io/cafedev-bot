@@ -16,6 +16,7 @@ const ingestJob = (userId: string) =>
 		execute: async ({ url }) => {
 			const normalized = normalizeUrl(url);
 			const { title, text } = await extract(normalized);
+			if (!text.trim()) return { error: "page came back empty — retry" };
 			const id = saveJob(normalized, title, text);
 			track(userId, id);
 			return { id, title };

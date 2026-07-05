@@ -13,24 +13,24 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.1",
+		"@biomejs/biome": "^2.5.2",
 		"@types/bun": "latest",
 		"@types/react": "^19.2.17"
 	},
 	"peerDependencies": {
-		"typescript": "^5"
+		"typescript": "^5.9.3"
 	},
 	"dependencies": {
 		"@gramio/format": "^0.9.0",
 		"@grammyjs/auto-chat-action": "^0.1.1",
 		"@grammyjs/auto-retry": "^2.0.2",
-		"@langfuse/otel": "^5.9.0",
-		"@langfuse/tracing": "^5.9.0",
-		"@langfuse/vercel-ai-sdk": "^5.9.0",
+		"@langfuse/otel": "^5.9.1",
+		"@langfuse/tracing": "^5.9.1",
+		"@langfuse/vercel-ai-sdk": "^5.9.1",
 		"@opentelemetry/sdk-node": "^0.219.0",
 		"@tavily/ai-sdk": "^0.5.0",
-		"ai": "^7.0.2",
-		"better-auth": "^1.6.22",
+		"ai": "^7.0.15",
+		"better-auth": "^1.6.23",
 		"grammy": "^1.44.0",
 		"gray-matter": "^4.0.3",
 		"hono": "^4.12.27",

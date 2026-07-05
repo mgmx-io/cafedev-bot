@@ -11,7 +11,7 @@ export async function run(
 ): Promise<{ text: string; responseMessages: ModelMessage[] }> {
 	const sessionId = `${sender.channel}:${sender.channelUserId}`;
 	const agent = new ToolLoopAgent({
-		model: "deepseek/deepseek-v4-pro",
+		model: "anthropic/claude-sonnet-5",
 		instructions: systemPrompt(userId),
 		tools: buildTools(userId, sender),
 	});

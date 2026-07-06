@@ -69,7 +69,23 @@ export const cvSchema = z.object({
 		),
 });
 
+// Typographic knobs only; layout stays fixed single-column for ATS.
+export const styleSchema = z.object({
+	accent: z
+		.string()
+		.regex(/^#[0-9a-f]{6}$/i)
+		.optional()
+		.describe("Heading and link color as hex, e.g. '#2e7d32'."),
+	size: z
+		.number()
+		.min(9.5)
+		.max(12)
+		.optional()
+		.describe("Base font size in px; smaller fits more per page."),
+});
+
 export type Cv = z.infer<typeof cvSchema>;
+export type CvStyle = z.infer<typeof styleSchema>;
 export type Contact = z.infer<typeof contactSchema>;
 export type Entry = z.infer<typeof entrySchema>;
 export type Section = z.infer<typeof sectionSchema>;

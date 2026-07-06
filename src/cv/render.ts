@@ -1,4 +1,4 @@
-import type { Contact, Cv, Entry, Section } from "@/cv/schema";
+import type { Contact, Cv, CvStyle, Entry, Section } from "@/cv/schema";
 import CSS from "@/cv/styles.css" with { type: "text" };
 
 /** Typographic Unicode to ASCII — ATS parsers garble it into mojibake or split words. */
@@ -88,12 +88,15 @@ function sectionHtml(s: Section): Html {
 }
 
 /** The full HTML document for a CV; renderCvPdf prints exactly this. */
-export function cvHtml(cv: Cv): string {
+export function cvHtml(cv: Cv, style: CvStyle = {}): string {
 	const c = normalizeDeep(cv);
 	const contacts = c.contacts
 		.map(contactHtml)
 		.reduce((a, b) => html`${a} | ${b}`);
-	return html`<!doctype html><html lang="${c.lang}"><head><meta charset="utf-8"><style>${new Html(CSS)}</style></head><body>
+	return html`<!doctype html><html lang="${c.lang}" style="${[
+		style.accent && `--accent:${style.accent};`,
+		style.size && `--size:${style.size}px;`,
+	]}"><head><meta charset="utf-8"><style>${new Html(CSS)}</style></head><body>
 		<h1>${c.name}</h1>
 		${c.tagline && html`<p class="tagline">${c.tagline}</p>`}
 		<p class="contacts">${contacts}</p>
@@ -104,6 +107,7 @@ export function cvHtml(cv: Cv): string {
 /** Render a structured CV to an ATS-safe, single-column A4 PDF. */
 export async function renderCvPdf(
 	cv: Cv,
+	style: CvStyle = {},
 ): Promise<{ pdf: Uint8Array; pages: number }> {
 	const view = new Bun.WebView({
 		backend: { type: "chrome", argv: ["--no-sandbox"] },
@@ -111,7 +115,7 @@ export async function renderCvPdf(
 
 	try {
 		await view.navigate(
-			`data:text/html;charset=utf-8;base64,${Buffer.from(cvHtml(cv)).toString("base64")}`,
+			`data:text/html;charset=utf-8;base64,${Buffer.from(cvHtml(cv, style)).toString("base64")}`,
 		);
 		const { data } = (await view.cdp("Page.printToPDF", {
 			printBackground: true,

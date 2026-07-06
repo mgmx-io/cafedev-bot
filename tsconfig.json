@@ -10,7 +10,11 @@
 		"types": ["bun"],
 		"strict": true,
 		"skipLibCheck": true,
-		"paths": { "@/*": ["./src/*"] }
+		"paths": {
+			"@server/*": ["./server/*"],
+			"@web/*": ["./web/*"],
+			"@shared/*": ["./shared/*"]
+		}
 	},
-	"exclude": ["src/web"]
+	"exclude": ["web"]
 }

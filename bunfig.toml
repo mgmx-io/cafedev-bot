@@ -1,1 +1,1 @@
-preload = ["./src/lib/telemetry.ts"]
+preload = ["./server/lib/telemetry.ts"]

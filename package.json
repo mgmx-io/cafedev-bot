@@ -1,16 +1,16 @@
 {
 	"name": "career-agent",
-	"module": "src/index.ts",
+	"module": "server/index.ts",
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"dev": "bun run --hot src/index.ts",
+		"dev": "bun run --hot server/index.ts",
 		"deploy": "bun scripts/deploy.ts",
 		"migrate": "bun scripts/migrate.ts",
-		"cli": "bun run src/channels/cli/index.tsx",
+		"cli": "bun run server/channels/cli/index.tsx",
 		"lint": "biome check",
 		"format": "biome check --write",
-		"typecheck": "tsc --noEmit && tsc --noEmit -p src/web"
+		"typecheck": "tsc --noEmit && tsc --noEmit -p web"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.2",

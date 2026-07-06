@@ -1,5 +1,5 @@
 // bun scripts/setup-telegram.ts https://bot.cafedev.co
-import { TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET } from "@/lib/env";
+import { TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET } from "@server/lib/env";
 
 const res = await fetch(
 	`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,

@@ -12,6 +12,6 @@ app.route("/telegram", telegram);
 
 export default {
 	port: PORT,
-	routes: { "/app": spa, "/app/*": spa },
+	routes: { "/": spa },
 	fetch: app.fetch,
 };

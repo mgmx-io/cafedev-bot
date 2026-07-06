@@ -94,13 +94,11 @@ bot.on("message:document", async (ctx) => {
 
 async function respond(ctx: Filter<BotContext, "message">, content: string) {
 	ctx.chatAction = "typing";
-	const { text } = await handleIncoming({
+	await handleIncoming({
 		channel: "telegram",
 		channelUserId: String(ctx.from.id),
 		content,
 	});
-	const reply = markdownToFormattable(text);
-	await ctx.reply(reply.text, { entities: reply.entities as MessageEntity[] });
 }
 
 registerDelivery("telegram", {

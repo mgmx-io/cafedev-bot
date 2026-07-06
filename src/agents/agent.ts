@@ -9,7 +9,7 @@ export async function run(
 	messages: ModelMessage[],
 	userId: string,
 	sender: Sender,
-): Promise<{ text: string; responseMessages: ModelMessage[] }> {
+): Promise<{ responseMessages: ModelMessage[] }> {
 	const sessionId = `${sender.channel}:${sender.channelUserId}`;
 	const agent = new ToolLoopAgent({
 		model: "deepseek/deepseek-v4-pro",
@@ -17,13 +17,11 @@ export async function run(
 		tools: buildTools(userId, sender),
 	});
 
-	// text emitted alongside tool calls never reaches result.text — send it as it happens
 	return await propagateAttributes({ userId, sessionId }, () =>
 		agent.generate({
 			messages,
-			onStepEnd: (step) => {
-				if (step.toolCalls.length && step.text.trim())
-					deliverMessage(sender, step.text);
+			onStepEnd: ({ text }) => {
+				if (text.trim()) deliverMessage(sender, text);
 			},
 		}),
 	);

@@ -30,11 +30,11 @@ export function followCompany(userId: string, boardId: number): void {
 	);
 }
 
-function followedBoards(
-	userId: string,
-): { id: number; ats: AtsName; slug: string }[] {
+export type Board = { id: number; ats: AtsName; slug: string };
+
+export function followedBoards(userId: string): Board[] {
 	return db
-		.query<{ id: number; ats: AtsName; slug: string }, [string]>(
+		.query<Board, [string]>(
 			`SELECT cb.id, cb.ats, cb.slug FROM company_boards cb
 			 JOIN company_follows cf ON cf.board_id = cb.id
 			 WHERE cf.user_id = ?`,

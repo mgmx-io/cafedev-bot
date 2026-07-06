@@ -1,4 +1,4 @@
-import { login } from "./auth";
+import { login } from "../auth";
 
 export function Landing() {
 	return (

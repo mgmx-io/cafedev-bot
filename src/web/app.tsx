@@ -1,13 +1,16 @@
-import { createRoot } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { auth } from "./auth";
-import { Dashboard } from "./dashboard";
-import { Landing } from "./landing";
+import { Dashboard } from "./components/dashboard";
+import { Landing } from "./components/landing";
 
-function App() {
+const queryClient = new QueryClient();
+
+export function App() {
 	const { data: session, isPending } = auth.useSession();
 	if (isPending) return null;
-	return session ? <Dashboard name={session.user.name} /> : <Landing />;
+	return (
+		<QueryClientProvider client={queryClient}>
+			{session ? <Dashboard name={session.user.name} /> : <Landing />}
+		</QueryClientProvider>
+	);
 }
-
-const root = document.getElementById("root");
-if (root) createRoot(root).render(<App />);

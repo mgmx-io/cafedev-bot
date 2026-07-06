@@ -39,6 +39,26 @@ export function setStatus(userId: string, jobId: number, status: Status): void {
 	);
 }
 
+export type Application = {
+	id: number;
+	title: string;
+	url: string;
+	status: Status;
+	fit: Fit | null;
+	created_at: string;
+};
+
+/** A user's tracked jobs, newest first, for the dashboard. */
+export function list(userId: string): Application[] {
+	return db
+		.query<Application, [string]>(
+			`SELECT ja.job_id AS id, jp.title, jp.url, ja.status, ja.fit, ja.created_at
+			 FROM job_applications ja JOIN job_postings jp ON jp.id = ja.job_id
+			 WHERE ja.user_id = ? ORDER BY ja.created_at DESC`,
+		)
+		.all(userId);
+}
+
 export type Counts = {
 	total: number;
 	status: [string, number][];

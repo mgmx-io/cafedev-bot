@@ -1,3 +1,4 @@
+import { BOT_URL } from "../constants";
 import { useBoards } from "../hooks/use-boards";
 
 export function BoardList() {
@@ -6,7 +7,10 @@ export function BoardList() {
 	if (isError) return <p>No se pudo cargar. Recargá la página.</p>;
 	if (data.length === 0)
 		return (
-			<p>Pedile al agente que siga el board de una empresa y lo ves acá.</p>
+			<p>
+				<a href={BOT_URL}>Pedile al agente</a> que siga el board de una empresa
+				y lo ves acá.
+			</p>
 		);
 	return (
 		<ul>

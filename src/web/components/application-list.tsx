@@ -1,3 +1,4 @@
+import { BOT_URL } from "../constants";
 import { useApplications } from "../hooks/use-applications";
 
 const STATUS: Record<string, string> = {
@@ -21,8 +22,9 @@ export function ApplicationList() {
 	if (data.length === 0)
 		return (
 			<p>
-				Todavía no hay nada acá. Mandale el link de un trabajo al agente por
-				Telegram y aparece solo.
+				Todavía no hay nada acá.{" "}
+				<a href={BOT_URL}>Mandale el link de un trabajo al agente</a> y aparece
+				solo.
 			</p>
 		);
 	return (

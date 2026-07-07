@@ -1,5 +1,8 @@
+import type { BoardOpenings } from "@shared/jobs";
+import { X } from "lucide-react";
+import { useState } from "react";
 import { BOT_URL } from "../constants";
-import { useBoardOpenings } from "../hooks/use-boards";
+import { useBoardOpenings, useUnfollowBoard } from "../hooks/use-boards";
 import { SendToChat } from "./send-to-chat";
 import {
 	Accordion,
@@ -7,9 +10,22 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "./ui/accordion";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "./ui/alert-dialog";
+import { Button } from "./ui/button";
 
 export function BoardList() {
 	const { data, isPending, isError } = useBoardOpenings();
+	const { mutate: unfollowBoard } = useUnfollowBoard();
+	const [toUnfollow, setToUnfollow] = useState<BoardOpenings | null>(null);
 	if (isPending)
 		return <p className="text-muted-foreground">Checking boards…</p>;
 	if (isError)
@@ -38,14 +54,25 @@ export function BoardList() {
 						key={`${b.ats}/${b.slug}`}
 						value={`${b.ats}/${b.slug}`}
 					>
-						<AccordionTrigger className="rounded-none pr-4 pl-2 hover:bg-muted/50">
-							<span className="font-semibold">
-								{b.slug}{" "}
-								<span className="font-normal text-muted-foreground">
-									· {b.ats} · {b.postings.length} openings
+						<div className="flex items-center pl-2 hover:bg-muted/50">
+							<Button
+								aria-label="Unfollow"
+								size="icon-sm"
+								variant="ghost"
+								className="text-muted-foreground"
+								onClick={() => setToUnfollow(b)}
+							>
+								<X />
+							</Button>
+							<AccordionTrigger className="rounded-none pr-4 pl-2">
+								<span className="font-semibold">
+									{b.slug}{" "}
+									<span className="font-normal text-muted-foreground">
+										· {b.ats} · {b.postings.length} openings
+									</span>
 								</span>
-							</span>
-						</AccordionTrigger>
+							</AccordionTrigger>
+						</div>
 						<AccordionContent>
 							{b.postings.length === 0 ? (
 								<p className="px-2 text-muted-foreground text-sm">
@@ -80,6 +107,29 @@ export function BoardList() {
 					Couldn't check: {data.failed.join(", ")}
 				</p>
 			)}
+			<AlertDialog
+				open={toUnfollow !== null}
+				onOpenChange={(open) => !open && setToUnfollow(null)}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Unfollow {toUnfollow?.slug}?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Its openings stop showing up here. You can always ask the agent to
+							follow it again.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							variant="destructive"
+							onClick={() => toUnfollow && unfollowBoard(toUnfollow.id)}
+						>
+							Unfollow
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

@@ -23,6 +23,7 @@ export type Application = {
 export type Board = { id: number; ats: string; slug: string };
 
 export type BoardOpenings = {
+	id: number;
 	ats: string;
 	slug: string;
 	postings: { title: string; url: string }[];

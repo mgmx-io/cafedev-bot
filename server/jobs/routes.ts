@@ -1,6 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { list, remove, setStatus } from "@server/jobs/applications";
-import { checkBoards } from "@server/jobs/companies";
+import { checkBoards, unfollowCompany } from "@server/jobs/companies";
 import { requireAuth } from "@server/lib/auth-guard";
 import { STATUSES } from "@shared/jobs";
 import { Hono } from "hono";
@@ -34,4 +34,13 @@ jobs.delete(
 );
 jobs.get("/boards/openings", requireAuth, async (c) =>
 	c.json(await checkBoards(c.get("userId"))),
+);
+jobs.delete(
+	"/boards/:id/follow",
+	requireAuth,
+	zValidator("param", z.object({ id: z.coerce.number().int() })),
+	(c) => {
+		unfollowCompany(c.get("userId"), c.req.valid("param").id);
+		return c.body(null, 204);
+	},
 );

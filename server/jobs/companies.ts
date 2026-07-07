@@ -31,6 +31,14 @@ export function followCompany(userId: string, boardId: number): void {
 	);
 }
 
+/** Stop following a company's board for a user. The board row stays — other users may follow it. */
+export function unfollowCompany(userId: string, boardId: number): void {
+	db.run("DELETE FROM company_follows WHERE user_id = ? AND board_id = ?", [
+		userId,
+		boardId,
+	]);
+}
+
 export function followedBoards(userId: string): Board[] {
 	return db
 		.query<Board, [string]>(
@@ -52,6 +60,7 @@ export async function checkBoards(userId: string): Promise<BoardCheck> {
 			try {
 				const postings = await ATS[ats].source(board.slug);
 				boards.push({
+					id: board.id,
 					ats,
 					slug: board.slug,
 					postings: postings.map((p) => ({ title: p.title, url: p.url })),

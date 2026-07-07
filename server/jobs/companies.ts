@@ -1,6 +1,6 @@
 import { ATS, type AtsName, detectSource } from "@server/jobs/catalog";
 import { db } from "@server/lib/db";
-import type { Board } from "@shared/jobs";
+import type { Board, BoardCheck } from "@shared/jobs";
 
 function upsertBoard(ats: AtsName, slug: string): number {
 	const row = db
@@ -41,31 +41,27 @@ export function followedBoards(userId: string): Board[] {
 		.all(userId);
 }
 
-export type BoardPostings = {
-	ats: AtsName;
-	slug: string;
-	postings: { title: string; url: string }[];
-};
-
 /** Scrape every board the user follows and return what each currently lists; a board whose scrape throws lands in `failed`. */
-export async function checkBoards(
-	userId: string,
-): Promise<{ boards: BoardPostings[]; failed: string[] }> {
-	const boards: BoardPostings[] = [];
+export async function checkBoards(userId: string): Promise<BoardCheck> {
+	const boards: BoardCheck["boards"] = [];
 	const failed: string[] = [];
-	for (const board of followedBoards(userId)) {
-		// ponytail: shared Board types ats as plain string; rows only ever hold catalog names
-		const ats = board.ats as AtsName;
-		try {
-			const postings = await ATS[ats].source(board.slug);
-			boards.push({
-				ats,
-				slug: board.slug,
-				postings: postings.map((p) => ({ title: p.title, url: p.url })),
-			});
-		} catch {
-			failed.push(board.slug);
-		}
-	}
+	await Promise.all(
+		followedBoards(userId).map(async (board) => {
+			// ponytail: shared Board types ats as plain string; rows only ever hold catalog names
+			const ats = board.ats as AtsName;
+			try {
+				const postings = await ATS[ats].source(board.slug);
+				boards.push({
+					ats,
+					slug: board.slug,
+					postings: postings.map((p) => ({ title: p.title, url: p.url })),
+				});
+			} catch {
+				failed.push(board.slug);
+			}
+		}),
+	);
+	// los scrapes terminan en cualquier orden; orden estable para UI y agente
+	boards.sort((a, b) => a.slug.localeCompare(b.slug));
 	return { boards, failed };
 }

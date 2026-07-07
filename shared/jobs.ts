@@ -21,3 +21,11 @@ export type Application = {
 };
 
 export type Board = { id: number; ats: string; slug: string };
+
+export type BoardOpenings = {
+	ats: string;
+	slug: string;
+	postings: { title: string; url: string }[];
+};
+
+export type BoardCheck = { boards: BoardOpenings[]; failed: string[] };

@@ -1,6 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { list, setStatus } from "@server/jobs/applications";
-import { followedBoards } from "@server/jobs/companies";
+import { checkBoards } from "@server/jobs/companies";
 import { requireAuth } from "@server/lib/auth-guard";
 import { STATUSES } from "@shared/jobs";
 import { Hono } from "hono";
@@ -23,6 +23,6 @@ jobs.patch(
 		return c.body(null, 204);
 	},
 );
-jobs.get("/boards", requireAuth, (c) =>
-	c.json(followedBoards(c.get("userId"))),
+jobs.get("/boards/openings", requireAuth, async (c) =>
+	c.json(await checkBoards(c.get("userId"))),
 );

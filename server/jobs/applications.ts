@@ -27,6 +27,14 @@ export function setStatus(userId: string, jobId: number, status: Status): void {
 	);
 }
 
+/** Stop tracking a job for a user. */
+export function remove(userId: string, jobId: number): void {
+	db.run("DELETE FROM job_applications WHERE user_id = ? AND job_id = ?", [
+		userId,
+		jobId,
+	]);
+}
+
 /** A user's tracked jobs, newest first, for the dashboard. */
 export function list(userId: string): Application[] {
 	return db

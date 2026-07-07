@@ -4,6 +4,11 @@ export async function get<T>(url: string): Promise<T> {
 	return r.json();
 }
 
+export async function del(url: string): Promise<void> {
+	const r = await fetch(url, { method: "DELETE" });
+	if (!r.ok) throw new Error(`${url}: ${r.status}`);
+}
+
 export async function patch(url: string, body: unknown): Promise<void> {
 	const r = await fetch(url, {
 		method: "PATCH",

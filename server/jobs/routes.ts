@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { list, setStatus } from "@server/jobs/applications";
+import { list, remove, setStatus } from "@server/jobs/applications";
 import { checkBoards } from "@server/jobs/companies";
 import { requireAuth } from "@server/lib/auth-guard";
 import { STATUSES } from "@shared/jobs";
@@ -20,6 +20,15 @@ jobs.patch(
 			c.req.valid("param").id,
 			c.req.valid("json").status,
 		);
+		return c.body(null, 204);
+	},
+);
+jobs.delete(
+	"/applications/:id",
+	requireAuth,
+	zValidator("param", z.object({ id: z.coerce.number().int() })),
+	(c) => {
+		remove(c.get("userId"), c.req.valid("param").id);
 		return c.body(null, 204);
 	},
 );

@@ -1,6 +1,6 @@
 import type { Application, Status } from "@shared/jobs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { get, patch } from "../api";
+import { del, get, patch } from "../api";
 
 export function useApplications() {
 	return useQuery({
@@ -19,6 +19,22 @@ export function useSetStatus() {
 			await queryClient.cancelQueries({ queryKey: ["applications"] });
 			queryClient.setQueryData<Application[]>(["applications"], (prev) =>
 				prev?.map((a) => (a.id === id ? { ...a, status } : a)),
+			);
+		},
+		onError: () =>
+			queryClient.invalidateQueries({ queryKey: ["applications"] }),
+	});
+}
+
+export function useDeleteApplication() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (id: number) => del(`/api/applications/${id}`),
+		// optimista; si el DELETE falla, el refetch restaura la verdad del server
+		onMutate: async (id) => {
+			await queryClient.cancelQueries({ queryKey: ["applications"] });
+			queryClient.setQueryData<Application[]>(["applications"], (prev) =>
+				prev?.filter((a) => a.id !== id),
 			);
 		},
 		onError: () =>

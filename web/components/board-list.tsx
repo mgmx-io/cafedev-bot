@@ -3,20 +3,34 @@ import { useBoards } from "../hooks/use-boards";
 
 export function BoardList() {
 	const { data, isPending, isError } = useBoards();
-	if (isPending) return <p>Cargando…</p>;
-	if (isError) return <p>No se pudo cargar. Recargá la página.</p>;
+	if (isPending) return <p className="text-muted-foreground">Loading…</p>;
+	if (isError)
+		return (
+			<p className="text-muted-foreground">Couldn't load. Refresh the page.</p>
+		);
 	if (data.length === 0)
 		return (
-			<p>
-				<a href={BOT_URL}>Pedile al agente</a> que siga el board de una empresa
-				y lo ves acá.
+			<p className="text-muted-foreground">
+				<a
+					className="text-foreground underline underline-offset-4"
+					href={BOT_URL}
+					target="_blank"
+					rel="noreferrer"
+				>
+					Ask the agent
+				</a>{" "}
+				to follow a company's board and it shows up here.
 			</p>
 		);
 	return (
-		<ul>
+		<ul className="divide-y">
 			{data.map((b) => (
-				<li key={b.id}>
-					{b.slug} <small>({b.ats})</small>
+				<li
+					key={b.id}
+					className="flex items-center justify-between py-2 text-sm"
+				>
+					<span className="font-medium">{b.slug}</span>
+					<span className="text-muted-foreground">{b.ats}</span>
 				</li>
 			))}
 		</ul>

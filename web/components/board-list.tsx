@@ -1,13 +1,12 @@
-import { Send } from "lucide-react";
 import { BOT_URL } from "../constants";
 import { useBoardOpenings } from "../hooks/use-boards";
+import { SendToChat } from "./send-to-chat";
 import {
 	Accordion,
 	AccordionContent,
 	AccordionItem,
 	AccordionTrigger,
 } from "./ui/accordion";
-import { Button } from "./ui/button";
 
 export function BoardList() {
 	const { data, isPending, isError } = useBoardOpenings();
@@ -39,7 +38,7 @@ export function BoardList() {
 						key={`${b.ats}/${b.slug}`}
 						value={`${b.ats}/${b.slug}`}
 					>
-						<AccordionTrigger>
+						<AccordionTrigger className="rounded-none pr-4 pl-2 hover:bg-muted/50">
 							<span className="font-semibold">
 								{b.slug}{" "}
 								<span className="font-normal text-muted-foreground">
@@ -49,7 +48,7 @@ export function BoardList() {
 						</AccordionTrigger>
 						<AccordionContent>
 							{b.postings.length === 0 ? (
-								<p className="text-muted-foreground text-sm">
+								<p className="px-2 text-muted-foreground text-sm">
 									No openings right now.
 								</p>
 							) : (
@@ -57,7 +56,7 @@ export function BoardList() {
 									{b.postings.map((p) => (
 										<li
 											key={p.url}
-											className="flex items-center justify-between gap-2 py-2 text-sm"
+											className="flex items-center justify-between gap-2 px-2 py-2 text-sm transition-colors hover:bg-muted/50"
 										>
 											<a
 												className="line-clamp-2 hover:underline"
@@ -67,16 +66,7 @@ export function BoardList() {
 											>
 												{p.title}
 											</a>
-											<Button asChild size="icon-sm" variant="ghost">
-												<a
-													aria-label="Send to chat"
-													href={`${BOT_URL}?text=${encodeURIComponent(p.url)}`}
-													target="_blank"
-													rel="noreferrer"
-												>
-													<Send />
-												</a>
-											</Button>
+											<SendToChat url={p.url} />
 										</li>
 									))}
 								</ul>

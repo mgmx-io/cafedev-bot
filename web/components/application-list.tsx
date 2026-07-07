@@ -1,9 +1,10 @@
 import { STATUSES } from "@shared/jobs";
-import { ChevronDown, Send } from "lucide-react";
+import { cn } from "@web/lib/utils";
+import { ChevronDown } from "lucide-react";
 import { BOT_URL } from "../constants";
 import { useApplications, useSetStatus } from "../hooks/use-applications";
+import { SendToChat } from "./send-to-chat";
 import { badgeVariants } from "./ui/badge";
-import { Button } from "./ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -18,8 +19,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "./ui/table";
-
-const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 // UTC fijo: la fecha guardada no debe correrse un día según el huso del viewer
 const fmtDate = (d: string) =>
@@ -79,21 +78,25 @@ export function ApplicationList() {
 						<TableCell>
 							<DropdownMenu>
 								<DropdownMenuTrigger
-									className={badgeVariants({ variant: "secondary" })}
+									className={badgeVariants({
+										variant: "secondary",
+										className: "capitalize",
+									})}
 								>
-									{cap(a.status)}
+									{a.status}
 									<ChevronDown />
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="start">
 									{STATUSES.map((s) => (
 										<DropdownMenuItem
 											key={s}
-											className={
-												s === a.status ? "bg-accent text-accent-foreground" : ""
-											}
+											className={cn(
+												"capitalize",
+												s === a.status && "bg-accent text-accent-foreground",
+											)}
 											onSelect={() => setStatus({ id: a.id, status: s })}
 										>
-											{cap(s)}
+											{s}
 										</DropdownMenuItem>
 									))}
 								</DropdownMenuContent>
@@ -103,16 +106,7 @@ export function ApplicationList() {
 							{fmtDate(a.created_at)}
 						</TableCell>
 						<TableCell className="text-right">
-							<Button asChild size="icon-sm" variant="ghost">
-								<a
-									aria-label="Send to chat"
-									href={`${BOT_URL}?text=${encodeURIComponent(a.url)}`}
-									target="_blank"
-									rel="noreferrer"
-								>
-									<Send />
-								</a>
-							</Button>
+							<SendToChat url={a.url} />
 						</TableCell>
 					</TableRow>
 				))}

@@ -1,1 +1,4 @@
 preload = ["./server/lib/telemetry.ts"]
+
+[serve.static]
+plugins = ["bun-plugin-tailwind"]

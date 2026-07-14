@@ -1,6 +1,7 @@
 import { run } from "@server/agents/agent";
 import { loadContext, saveContext } from "@server/chat/context";
 import { deliverMessage } from "@server/chat/deliver";
+import { enforceLimit } from "@server/chat/limit";
 import {
 	resolveIdentity,
 	type Sender,
@@ -27,6 +28,7 @@ class Conversation {
 	}
 
 	private async chat(content: string, userId: string): Promise<void> {
+		if (enforceLimit(userId, this.sender)) return;
 		const userMsg: ModelMessage = { role: "user", content };
 		const history = [...loadContext(this.sender), userMsg];
 		const { responseMessages } = await run(history, userId, this.sender);

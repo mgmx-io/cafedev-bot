@@ -7,6 +7,9 @@ await $`git pull --ff-only`;
 console.log("→ bun install");
 await $`bun install --frozen-lockfile --production`;
 
+console.log("→ install browser");
+await $`bun run browser:install`;
+
 console.log("→ migrate");
 await $`bun scripts/migrate.ts`;
 

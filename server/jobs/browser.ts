@@ -1,0 +1,27 @@
+import { withBrowserPage } from "@server/browser/playwright";
+
+type Page = {
+	title: string;
+	text: string;
+	finalUrl: string;
+	html: string;
+};
+
+export async function extract(url: string): Promise<Page> {
+	return withBrowserPage(async (page) => {
+		await page.addInitScript(() => {
+			Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+		});
+		await page.goto(url, { waitUntil: "domcontentloaded" });
+		await page
+			.waitForLoadState("networkidle", { timeout: 10_000 })
+			.catch(() => undefined);
+
+		const [title, text, html] = await Promise.all([
+			page.title(),
+			page.locator("body").innerText(),
+			page.content(),
+		]);
+		return { title, text, finalUrl: page.url(), html };
+	});
+}

@@ -4,6 +4,7 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
+		"browser:install": "playwright install chromium",
 		"dev": "bun run --hot server/index.ts",
 		"deploy": "bun scripts/deploy.ts",
 		"migrate": "bun scripts/migrate.ts",
@@ -43,6 +44,7 @@
 		"ink": "^7.1.0",
 		"lucide-react": "^1.23.0",
 		"marked": "^18.0.5",
+		"playwright": "^1.61.1",
 		"radix-ui": "^1.6.2",
 		"react": "^19.2.7",
 		"react-dom": "^19.2.7",

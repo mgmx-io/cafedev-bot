@@ -1,11 +1,11 @@
 import { setFit, setStatus, track } from "@server/jobs/applications";
+import { extract } from "@server/jobs/browser";
 import {
 	checkBoards,
 	followCompany,
 	resolveBoard,
 } from "@server/jobs/companies";
 import { saveJob } from "@server/jobs/store";
-import { extract } from "@server/jobs/webview";
 import { normalizeUrl } from "@server/lib/url";
 import { STATUSES } from "@shared/jobs";
 import { tool } from "ai";

@@ -1,3 +1,4 @@
+import { withBrowserPage } from "@server/browser/playwright";
 import type { Contact, Cv, CvStyle, Entry, Section } from "@server/cv/schema";
 import CSS from "@server/cv/styles.css" with { type: "text" };
 
@@ -109,23 +110,14 @@ export async function renderCvPdf(
 	cv: Cv,
 	style: CvStyle = {},
 ): Promise<{ pdf: Uint8Array; pages: number }> {
-	const view = new Bun.WebView({
-		backend: { type: "chrome", argv: ["--no-sandbox"] },
-	});
-
-	try {
-		await view.navigate(
-			`data:text/html;charset=utf-8;base64,${Buffer.from(cvHtml(cv, style)).toString("base64")}`,
-		);
-		const { data } = (await view.cdp("Page.printToPDF", {
+	return withBrowserPage(async (page) => {
+		await page.setContent(cvHtml(cv, style), { waitUntil: "load" });
+		const pdf = await page.pdf({
 			printBackground: true,
 			preferCSSPageSize: true,
-		})) as { data: string };
-		const pdf = Buffer.from(data, "base64");
+		});
 		const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || [])
 			.length;
 		return { pdf, pages };
-	} finally {
-		view.close();
-	}
+	});
 }

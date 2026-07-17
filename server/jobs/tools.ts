@@ -1,5 +1,5 @@
+import { extractPage } from "@server/browser/extract";
 import { setFit, setStatus, track } from "@server/jobs/applications";
-import { extract } from "@server/jobs/browser";
 import {
 	checkBoards,
 	followCompany,
@@ -20,7 +20,7 @@ const ingestJob = (userId: string) =>
 		}),
 		execute: async ({ url }) => {
 			const normalized = normalizeUrl(url);
-			const { title, text } = await extract(normalized);
+			const { title, text } = await extractPage(normalized);
 			if (!text.trim()) return { error: "page came back empty — retry" };
 			const id = saveJob(normalized, title, text);
 			track(userId, id);
@@ -42,7 +42,7 @@ const followCompanyTool = (userId: string) =>
 			const normalized = normalizeUrl(url);
 			let board = resolveBoard(normalized);
 			if (!board) {
-				const page = await extract(normalized);
+				const page = await extractPage(normalized);
 				board = resolveBoard(page.finalUrl) ?? resolveBoard(page.html);
 			}
 			if (!board) return { error: "No known ATS board at that URL." };

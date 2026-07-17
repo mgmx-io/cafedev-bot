@@ -1,13 +1,13 @@
 import { withBrowserPage } from "@server/browser/playwright";
 
-type Page = {
+export type ExtractedPage = {
 	title: string;
 	text: string;
 	finalUrl: string;
 	html: string;
 };
 
-export async function extract(url: string): Promise<Page> {
+export async function extractPage(url: string): Promise<ExtractedPage> {
 	return withBrowserPage(async (page) => {
 		await page.addInitScript(() => {
 			Object.defineProperty(navigator, "webdriver", { get: () => undefined });

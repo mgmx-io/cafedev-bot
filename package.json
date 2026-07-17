@@ -4,7 +4,6 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"browser:install": "playwright install chromium",
 		"dev": "bun run --hot server/index.ts",
 		"deploy": "bun scripts/deploy.ts",
 		"migrate": "bun scripts/migrate.ts",

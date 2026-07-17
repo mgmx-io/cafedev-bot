@@ -8,6 +8,7 @@ const CTE_PREFIX = `
 profile_notes    AS (SELECT * FROM main.profile_notes    WHERE user_id = ?1),
 job_applications AS (SELECT * FROM main.job_applications WHERE user_id = ?1),
 company_follows  AS (SELECT * FROM main.company_follows  WHERE user_id = ?1),
+artifacts        AS (SELECT * FROM main.artifacts        WHERE user_id = ?1),
 -- blanked out: auth/token tables the model should never see
 "user"               AS (SELECT 0 WHERE 0),
 session              AS (SELECT 0 WHERE 0),
@@ -27,7 +28,9 @@ profile_notes(id, summary, content, created_at, removed_at)
 -- removed_at NULL = active; content NULL = summary says it all
 company_boards(id, ats, slug, created_at)
 -- global ATS boards, e.g. ats='greenhouse'
-company_follows(id, board_id -> company_boards.id, created_at)`;
+company_follows(id, board_id -> company_boards.id, created_at)
+artifacts(id, kind, filename, content_type, sha256, size, created_at)
+-- immutable files generated for the user; size is in bytes`;
 
 let ro: Database | undefined;
 const roDb = () => (ro ??= new Database(DB_PATH, { readonly: true }));

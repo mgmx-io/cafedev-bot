@@ -8,7 +8,7 @@ console.log("→ bun install");
 await $`bun install --frozen-lockfile --production`;
 
 console.log("→ install browser");
-await $`bun run browser:install`;
+await $`bunx playwright install chromium`;
 
 console.log("→ migrate");
 await $`bun scripts/migrate.ts`;

@@ -1,6 +1,6 @@
+import { skillsPrompt } from "@server/agents/skills";
 import { jobsPrompt } from "@server/jobs/prompt";
 import { profilePrompt } from "@server/profile/prompt";
-import { skillsPrompt } from "@server/skills/prompt";
 
 /** System prompt for one user. Composes one prompt fragment per slice. */
 export function systemPrompt(userId: string): string {

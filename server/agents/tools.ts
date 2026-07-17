@@ -35,7 +35,7 @@ export const buildTools = (userId: string, sender: Sender) =>
 			...profileTools(userId),
 			...jobsTools(userId),
 			...queryTools(userId),
-			...cvTools(sender),
+			...cvTools(userId, sender),
 		},
 		sender,
 	);

@@ -12,7 +12,8 @@ and artifacts.
 
 1. Open the posting or application URL with `browser_open`.
 2. Use the returned snapshot's exact accessible roles and names with
-   `browser_act`. Prefer batches of independent fields.
+   `browser_act`. If multiple controls share both, use their zero-based `index`.
+   Prefer batches of independent fields.
 3. Continue through intermediate steps and inspect each returned snapshot.
 4. Ask one concise question when a required answer is missing. Keep the browser
    open while waiting.

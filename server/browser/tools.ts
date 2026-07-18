@@ -22,6 +22,14 @@ const roles = [
 const target = z.object({
 	role: z.enum(roles),
 	name: z.string().describe("The element's accessible name from browser_view."),
+	index: z
+		.number()
+		.int()
+		.nonnegative()
+		.optional()
+		.describe(
+			"Zero-based index when multiple elements have the same role and name.",
+		),
 });
 
 const actions = z.discriminatedUnion("type", [
@@ -67,10 +75,11 @@ async function view(page: Page) {
 }
 
 function locate(page: Page, action: z.infer<typeof target>): Locator {
-	return page.getByRole(action.role, {
+	const locator = page.getByRole(action.role, {
 		name: action.name,
 		exact: true,
 	});
+	return action.index === undefined ? locator : locator.nth(action.index);
 }
 
 const openBrowser = (userId: string) =>

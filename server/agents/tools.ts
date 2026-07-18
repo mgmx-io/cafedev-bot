@@ -1,6 +1,7 @@
 import { queryTools } from "@server/agents/query";
 import { researchTools } from "@server/agents/research";
 import { skillsTools } from "@server/agents/skills";
+import { browserTools } from "@server/browser/tools";
 import { deliverProgress } from "@server/chat/deliver";
 import { cvTools } from "@server/cv/tools";
 import type { Sender } from "@server/identity/service";
@@ -36,6 +37,7 @@ export const buildTools = (userId: string, sender: Sender) =>
 			...jobsTools(userId),
 			...queryTools(userId),
 			...cvTools(userId, sender),
+			...browserTools(userId),
 		},
 		sender,
 	);

@@ -8,6 +8,12 @@ export type Artifact = {
 	size: number;
 };
 
+type StoredArtifact = {
+	filename: string;
+	object_key: string;
+	content_type: string;
+};
+
 type SaveArtifact = {
 	userId: string;
 	kind: string;
@@ -58,4 +64,23 @@ export async function saveArtifact({
 	}
 
 	return { id, filename, sha256, size: data.byteLength };
+}
+
+/** Read one of the user's artifacts for a browser upload. */
+export async function readArtifact(
+	userId: string,
+	id: string,
+): Promise<{ filename: string; contentType: string; data: Uint8Array } | null> {
+	const artifact = db
+		.query<StoredArtifact, [string, string]>(
+			"SELECT filename, object_key, content_type FROM artifacts WHERE id = ? AND user_id = ?",
+		)
+		.get(id, userId);
+	if (!artifact) return null;
+	const data = new Uint8Array(await r2.file(artifact.object_key).arrayBuffer());
+	return {
+		filename: artifact.filename,
+		contentType: artifact.content_type,
+		data,
+	};
 }

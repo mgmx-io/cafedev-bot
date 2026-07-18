@@ -1,9 +1,5 @@
-import {
-	type Browser,
-	type BrowserContext,
-	chromium,
-	type Page,
-} from "playwright";
+import { newBrowserContext } from "@server/browser/playwright";
+import type { BrowserContext, Page } from "playwright";
 
 const SESSION_TTL_MS = 5 * 60 * 1000;
 
@@ -13,10 +9,7 @@ type Session = {
 	timeout: ReturnType<typeof setTimeout>;
 };
 
-let browser: Promise<Browser> | undefined;
 const sessions = new Map<string, Session>();
-
-const getBrowser = () => (browser ??= chromium.launch({ headless: true }));
 
 function scheduleClose(
 	userId: string,
@@ -38,7 +31,7 @@ function touch(userId: string, session: Session): void {
 /** Replace the user's current page with a fresh isolated browser context. */
 export async function openSession(userId: string, url: string): Promise<Page> {
 	await closeSession(userId);
-	const context = await (await getBrowser()).newContext();
+	const context = await newBrowserContext();
 	context.setDefaultTimeout(10_000);
 	const page = await context.newPage();
 	const timeout = scheduleClose(userId, context);

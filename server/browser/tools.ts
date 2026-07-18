@@ -44,9 +44,8 @@ const actions = z.discriminatedUnion("type", [
 		type: z.literal("press"),
 		key: z.string().describe("A Playwright key, e.g. Enter or ArrowDown."),
 	}),
-	z.object({
+	target.extend({
 		type: z.literal("upload"),
-		label: z.string().describe("The file input's visible label."),
 		artifact_id: z.string().describe("An artifact id owned by the user."),
 	}),
 ]);
@@ -111,7 +110,7 @@ const actBrowser = (userId: string) =>
 					const artifact = await readArtifact(userId, action.artifact_id);
 					if (!artifact)
 						throw new Error(`Artifact '${action.artifact_id}' not found.`);
-					await page.getByLabel(action.label, { exact: true }).setInputFiles({
+					await locate(page, action).setInputFiles({
 						name: artifact.filename,
 						mimeType: artifact.contentType,
 						buffer: Buffer.from(artifact.data),

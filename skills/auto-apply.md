@@ -29,6 +29,8 @@ and artifacts.
 - Never answer voluntary demographic questions unless the user supplied the
   exact answer for this application.
 - Use `query_db` to load relevant profile notes and CV artifact ids.
-- Upload files with the file input's visible label and the chosen artifact id.
+- Upload files with the file input's accessible role and name from the snapshot,
+  plus the chosen artifact id. `upload` sets the file directly; do not click the
+  control first.
 - If a CAPTCHA, login challenge, assessment, or inaccessible control blocks
   progress, tell the user where it stopped instead of trying to bypass it.

@@ -6,7 +6,7 @@ import { db } from "@server/lib/db";
 const DAILY_TOKENS = 1_000_000;
 
 const usedToday = db.query<{ total: number }, [string]>(
-	`SELECT COALESCE(SUM(input_tokens + output_tokens), 0) AS total
+	`SELECT COALESCE(SUM(input_tokens - cache_read_tokens + output_tokens), 0) AS total
 	 FROM token_usage
 	 WHERE user_id = ? AND created_at > datetime('now', '-1 day')`,
 );

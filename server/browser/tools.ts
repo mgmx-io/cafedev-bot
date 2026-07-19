@@ -1,7 +1,8 @@
 import { readArtifact } from "@server/artifacts/store";
+import { locate, locateFileInput } from "@server/browser/locators";
 import { closeSession, getSession, openSession } from "@server/browser/session";
 import { tool } from "ai";
-import type { Locator, Page } from "playwright";
+import type { Page } from "playwright";
 import { z } from "zod";
 
 const MAX_SNAPSHOT_CHARS = 25_000;
@@ -58,6 +59,8 @@ const actions = z.discriminatedUnion("type", [
 	}),
 ]);
 
+type BrowserAction = z.infer<typeof actions>;
+
 function activePage(userId: string): Page {
 	const page = getSession(userId);
 	if (!page) throw new Error("No browser is open. Call browser_open first.");
@@ -74,12 +77,45 @@ async function view(page: Page) {
 	};
 }
 
-function locate(page: Page, action: z.infer<typeof target>): Locator {
-	const locator = page.getByRole(action.role, {
-		name: action.name,
-		exact: true,
-	});
-	return action.index === undefined ? locator : locator.nth(action.index);
+async function performAction(
+	userId: string,
+	page: Page,
+	action: BrowserAction,
+): Promise<void> {
+	switch (action.type) {
+		case "fill":
+			await locate(page, action).fill(action.value);
+			return;
+		case "click":
+			await locate(page, action).click();
+			return;
+		case "check":
+			await locate(page, action).setChecked(action.checked);
+			return;
+		case "select":
+			await locate(page, action).selectOption({ label: action.value });
+			return;
+		case "press":
+			await locate(page, action).press(action.key);
+			return;
+		case "upload": {
+			const artifact = await readArtifact(userId, action.artifact_id);
+			if (!artifact)
+				throw new Error(`Artifact '${action.artifact_id}' not found.`);
+			await (await locateFileInput(page, action)).setInputFiles({
+				name: artifact.filename,
+				mimeType: artifact.contentType,
+				buffer: Buffer.from(artifact.data),
+			});
+			return;
+		}
+		default: {
+			const unsupported: never = action;
+			throw new Error(
+				`Unsupported browser action: ${JSON.stringify(unsupported)}`,
+			);
+		}
+	}
 }
 
 const openBrowser = (userId: string) =>
@@ -114,37 +150,7 @@ const actBrowser = (userId: string) =>
 		}),
 		execute: async ({ actions: batch }) => {
 			const page = activePage(userId);
-			for (const action of batch) {
-				if (action.type === "upload") {
-					const artifact = await readArtifact(userId, action.artifact_id);
-					if (!artifact)
-						throw new Error(`Artifact '${action.artifact_id}' not found.`);
-					await locate(page, action).setInputFiles({
-						name: artifact.filename,
-						mimeType: artifact.contentType,
-						buffer: Buffer.from(artifact.data),
-					});
-					continue;
-				}
-				const element = locate(page, action);
-				switch (action.type) {
-					case "fill":
-						await element.fill(action.value);
-						break;
-					case "click":
-						await element.click();
-						break;
-					case "check":
-						await element.setChecked(action.checked);
-						break;
-					case "select":
-						await element.selectOption({ label: action.value });
-						break;
-					case "press":
-						await element.press(action.key);
-						break;
-				}
-			}
+			for (const action of batch) await performAction(userId, page, action);
 			return view(page);
 		},
 	});

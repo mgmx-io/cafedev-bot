@@ -1,5 +1,5 @@
 import { readArtifact } from "@server/artifacts/store";
-import { locate, locateFileInput } from "@server/browser/locators";
+import { findFileInput, locate } from "@server/browser/locators";
 import { closeSession, getSession, openSession } from "@server/browser/session";
 import { tool } from "ai";
 import type { Page } from "playwright";
@@ -60,6 +60,7 @@ const actions = z.discriminatedUnion("type", [
 ]);
 
 type BrowserAction = z.infer<typeof actions>;
+type UploadAction = Extract<BrowserAction, { type: "upload" }>;
 
 function activePage(userId: string): Page {
 	const page = getSession(userId);
@@ -75,6 +76,38 @@ async function view(page: Page) {
 		snapshot: snapshot.slice(0, MAX_SNAPSHOT_CHARS),
 		truncated: snapshot.length > MAX_SNAPSHOT_CHARS,
 	};
+}
+
+async function uploadArtifact(
+	userId: string,
+	page: Page,
+	action: UploadAction,
+): Promise<void> {
+	const artifact = await readArtifact(userId, action.artifact_id);
+	if (!artifact) throw new Error(`Artifact '${action.artifact_id}' not found.`);
+
+	const file = {
+		name: artifact.filename,
+		mimeType: artifact.contentType,
+		buffer: Buffer.from(artifact.data),
+	};
+	const input = await findFileInput(page, action);
+	if (input) {
+		await input.setInputFiles(file);
+		return;
+	}
+
+	const trigger = locate(page, action);
+	const count = await trigger.count();
+	if (count !== 1)
+		throw new Error(
+			`Upload target '${action.name}' matches ${count} controls; provide its index.`,
+		);
+	const [chooser] = await Promise.all([
+		page.waitForEvent("filechooser"),
+		trigger.click(),
+	]);
+	await chooser.setFiles(file);
 }
 
 async function performAction(
@@ -98,17 +131,9 @@ async function performAction(
 		case "press":
 			await locate(page, action).press(action.key);
 			return;
-		case "upload": {
-			const artifact = await readArtifact(userId, action.artifact_id);
-			if (!artifact)
-				throw new Error(`Artifact '${action.artifact_id}' not found.`);
-			await (await locateFileInput(page, action)).setInputFiles({
-				name: artifact.filename,
-				mimeType: artifact.contentType,
-				buffer: Buffer.from(artifact.data),
-			});
+		case "upload":
+			await uploadArtifact(userId, page, action);
 			return;
-		}
 		default: {
 			const unsupported: never = action;
 			throw new Error(

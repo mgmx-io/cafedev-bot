@@ -6,11 +6,10 @@ type Target = {
 	index?: number;
 };
 
-function byRole(page: Page, target: Target, includeHidden = false): Locator {
+function byRole(page: Page, target: Target): Locator {
 	return page.getByRole(target.role, {
 		name: target.name,
 		exact: true,
-		includeHidden,
 	});
 }
 
@@ -19,30 +18,17 @@ export function locate(page: Page, target: Target): Locator {
 	return target.index === undefined ? locator : locator.nth(target.index);
 }
 
-// File inputs can share their button role and accessible name with a visible proxy.
-export async function locateFileInput(
+export async function findFileInput(
 	page: Page,
 	target: Target,
-): Promise<Locator> {
-	const fileInput = page.locator('input[type="file"]');
-
-	if (target.index !== undefined) {
-		const indexedFileInput = locate(page, target).and(fileInput);
-		if ((await indexedFileInput.count()) === 1) return indexedFileInput;
-	}
-
-	const fileInputs = byRole(page, target, true).and(fileInput);
+): Promise<Locator | undefined> {
+	const fileInputs = locate(page, target).and(
+		page.locator('input[type="file"]'),
+	);
 	const count = await fileInputs.count();
 
-	if (count === 1) {
-		return fileInputs;
-	}
-
-	if (count === 0) {
-		throw new Error(
-			`Upload target '${target.name}' does not match an HTML file input.`,
-		);
-	}
+	if (count === 0) return;
+	if (count === 1) return fileInputs;
 
 	throw new Error(
 		`Upload target '${target.name}' matches ${count} HTML file inputs; provide the file input's index.`,

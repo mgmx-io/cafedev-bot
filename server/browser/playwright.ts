@@ -10,7 +10,24 @@ type PageTask<T> = (page: Page) => Promise<T>;
 
 let browser: Promise<Browser> | undefined;
 
-const getBrowser = () => (browser ??= chromium.launch({ headless: true }));
+function launchBrowser(): Promise<Browser> {
+	const pending = chromium.launch({ headless: true });
+
+	pending.then(
+		(instance) => {
+			instance.once("disconnected", () => {
+				if (browser === pending) browser = undefined;
+			});
+		},
+		() => {
+			if (browser === pending) browser = undefined;
+		},
+	);
+
+	return pending;
+}
+
+const getBrowser = () => (browser ??= launchBrowser());
 
 /** Create an isolated context in the shared Chromium process. */
 export async function newBrowserContext(

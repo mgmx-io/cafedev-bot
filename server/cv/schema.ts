@@ -1,7 +1,14 @@
 import { z } from "zod";
 
+const inlineMarkdown = (description: string) =>
+	z
+		.string()
+		.describe(
+			`${description} Supports inline Markdown for links, bold, emphasis, code, and strikethrough; HTML and images are disabled.`,
+		);
+
 const entrySchema = z.object({
-	title: z.string().describe("E.g. 'Acme - Senior Engineer' or a degree."),
+	title: inlineMarkdown("E.g. 'Acme - Senior Engineer' or a degree."),
 	dates: z
 		.string()
 		.optional()
@@ -13,16 +20,20 @@ const entrySchema = z.object({
 		.optional()
 		.describe("E.g. 'Berlin, Germany' or 'Remote'."),
 	bullets: z
-		.array(z.string())
+		.array(
+			inlineMarkdown(
+				"One achievement per bullet, starting with an action verb.",
+			),
+		)
 		.optional()
-		.describe("One achievement per bullet, starting with an action verb."),
+		.describe("Achievement bullets."),
 });
 
 const sectionSchema = z.object({
 	heading: z
 		.string()
 		.describe("Section name parsers expect, e.g. 'Work Experience'."),
-	text: z.string().optional().describe("Paragraph content, e.g. the Summary."),
+	text: inlineMarkdown("Paragraph content, e.g. the Summary.").optional(),
 	entries: z
 		.array(entrySchema)
 		.optional()
@@ -31,9 +42,9 @@ const sectionSchema = z.object({
 		.array(
 			z.object({
 				label: z.string().describe("E.g. 'Languages'."),
-				text: z
-					.string()
-					.describe("Comma-separated items, e.g. 'TypeScript, Go, SQL'."),
+				text: inlineMarkdown(
+					"Comma-separated items, e.g. 'TypeScript, Go, SQL'.",
+				),
 			}),
 		)
 		.optional()
@@ -62,11 +73,7 @@ export const cvSchema = z.object({
 		.array(contactSchema)
 		.min(1)
 		.describe("Email, city, relevant links."),
-	sections: z
-		.array(sectionSchema)
-		.describe(
-			"All field values are plain text — markdown syntax renders literally.",
-		),
+	sections: z.array(sectionSchema).describe("Structured ATS-safe CV sections."),
 });
 
 // Typographic knobs only; layout stays fixed single-column for ATS.

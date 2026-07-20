@@ -49,7 +49,7 @@ h3 {
 	align-items: baseline;
 	gap: 12px;
 }
-h3 em {
+h3 .meta {
 	font-weight: 400;
 	font-size: var(--size);
 	color: #555;
@@ -71,6 +71,8 @@ li {
 a {
 	color: var(--accent);
 	text-decoration: none;
+}
+.contacts a {
 	white-space: nowrap;
 }
 .entry {

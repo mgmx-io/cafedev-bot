@@ -18,6 +18,10 @@ for the recruiter: `Jane-Doe-CV-Acme.pdf`.
   Experience, Projects, Education, Skills, Certifications — in that order,
   only the ones the profile supports, reverse chronological.
 - Each role: title `Company - Role`, dates and location, then 2-5 bullets.
+- Titles, paragraphs, bullets, and labeled-line text support inline Markdown.
+  Use links, bold, and emphasis sparingly; HTML and images are disabled.
+- Link a project's primary destination in its title; link a PR, article, or
+  demo where it is mentioned. Keep general profiles in contacts.
 - One page under ~10 years of experience, two max — send_cv returns the page
   count, so trim and resend if over. Cut oldest roles first.
 

@@ -1,6 +1,15 @@
 #!/usr/bin/env bun
 import { $ } from "bun";
 
+const SERVICE = "cafedev-bot";
+
+const getMainPid = async () =>
+	Number(
+		(
+			await $`systemctl show -p MainPID ${SERVICE} --value`.quiet().text()
+		).trim(),
+	);
+
 console.log("→ git pull");
 await $`git pull --ff-only`;
 
@@ -14,12 +23,33 @@ console.log("→ migrate");
 await $`bun scripts/migrate.ts`;
 
 console.log("→ restart service");
-const pid = (
-	await $`systemctl show -p MainPID cafedev-bot --value`.text()
-).trim();
-if (pid !== "0") {
-	await $`kill -TERM ${pid}`;
+const oldPid = await getMainPid();
+if (!Number.isInteger(oldPid) || oldPid <= 0) {
+	throw new Error(`${SERVICE} has no running main process`);
 }
+
+console.log(` old PID: ${oldPid}`);
+const kill = Bun.spawn(["/usr/bin/kill", "-TERM", String(oldPid)], {
+	stdout: "inherit",
+	stderr: "inherit",
+});
+const killExitCode = await kill.exited;
+if (killExitCode !== 0) {
+	throw new Error(`/usr/bin/kill exited with code ${killExitCode}`);
+}
+
+let newPid = 0;
+for (let i = 0; i < 40; i++) {
+	await Bun.sleep(500);
+	newPid = await getMainPid();
+	if (newPid > 0 && newPid !== oldPid) break;
+}
+
+if (newPid <= 0 || newPid === oldPid) {
+	throw new Error(`${SERVICE} did not replace PID ${oldPid} within 20s`);
+}
+
+console.log(` new PID: ${newPid}`);
 
 console.log("→ health check");
 for (let i = 1; i <= 15; i++) {
@@ -28,6 +58,8 @@ for (let i = 1; i <= 15; i++) {
 		.catch(() => false);
 	if (ok) {
 		console.log(` OK (after ${i}s)`);
+		const commit = (await $`git rev-parse --short HEAD`.quiet().text()).trim();
+		console.log(` deployed commit: ${commit}`);
 		process.exit(0);
 	}
 	await Bun.sleep(1000);

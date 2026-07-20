@@ -11,13 +11,14 @@ import { deleteUser, resolveIdentity } from "@server/identity/service";
 import { TELEGRAM_BOT_TOKEN } from "@server/lib/env";
 import { Bot, type Context, type Filter, InputFile } from "grammy";
 import type { MessageEntity } from "grammy/types";
-import { extractText, getDocumentProxy } from "unpdf";
+import { extractLinks, extractText, getDocumentProxy } from "unpdf";
 
 type BotContext = Context & AutoChatActionFlavor;
 type Chat = { texts: string[]; latest?: Context };
 
 export const bot = new Bot<BotContext>(TELEGRAM_BOT_TOKEN);
 const DEBOUNCE_MS = 0;
+const MAX_ATTACHMENT_CHARS = 20_000;
 const chats = new Map<number, Chat>();
 
 bot.api.config.use(autoRetry());
@@ -71,24 +72,36 @@ bot.on("message:text", async (ctx) => {
 
 bot.on("message:document", async (ctx) => {
 	ctx.chatAction = "typing";
+
 	const { file_name, mime_type } = ctx.message.document;
-	let text = "";
+	let extracted = "";
+
 	if (mime_type === "application/pdf") {
-		const file = await ctx.getFile();
-		const bytes = await (
-			await fetch(
-				`https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${file.file_path}`,
-			)
-		).arrayBuffer();
-		({ text } = await extractText(await getDocumentProxy(bytes), {
-			mergePages: true,
-		}));
+		const { file_path } = await ctx.getFile();
+		const bytes = await fetch(
+			`https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${file_path}`,
+		).then((response) => response.arrayBuffer());
+
+		const pdf = await getDocumentProxy(bytes);
+		const [{ text }, { links }] = await Promise.all([
+			extractText(pdf, { mergePages: true }),
+			extractLinks(pdf),
+		]);
+
+		const uniqueLinks = [...new Set(links)];
+		extracted = [
+			uniqueLinks.length ? `[embedded links]\n${uniqueLinks.join("\n")}` : "",
+			text.trim(),
+		]
+			.filter(Boolean)
+			.join("\n\n");
 	}
-	// ponytail: 20k-char cap guards against rogue huge PDFs; CVs never get close
-	const content = `[attachment "${file_name ?? "document"}"]\n${
-		text.trim().slice(0, 20_000) ||
-		"(unreadable — only text PDFs are supported)"
-	}`;
+
+	const body =
+		extracted.slice(0, MAX_ATTACHMENT_CHARS) ||
+		"(unreadable — only text PDFs are supported)";
+	const content = `[attachment "${file_name ?? "document"}"]\n${body}`;
+
 	await respond(ctx, [ctx.message.caption, content].filter(Boolean).join("\n"));
 });
 

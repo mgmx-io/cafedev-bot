@@ -10,7 +10,7 @@ startPolling();
 
 const app = new Hono();
 
-app.get("/health", (c) => c.text("ok"));
+app.get("/health", (c) => c.json({ status: "ok" }));
 app.route("/api", identity);
 app.route("/api", jobs);
 app.route("/telegram", telegram);

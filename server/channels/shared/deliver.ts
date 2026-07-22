@@ -1,4 +1,4 @@
-import type { Sender } from "@server/identity/service";
+import type { Sender } from "@server/channels/shared/identity";
 
 type OutText = { channelUserId: string; text: string };
 

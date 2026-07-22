@@ -4,11 +4,12 @@ import {
 	autoChatAction,
 } from "@grammyjs/auto-chat-action";
 import { autoRetry } from "@grammyjs/auto-retry";
-import { clearContext } from "@server/chat/context";
-import { registerDelivery } from "@server/chat/deliver";
-import { handleIncoming } from "@server/chat/handle";
-import { deleteUser, resolveIdentity } from "@server/identity/service";
+import { registerDelivery } from "@server/channels/shared/deliver";
+import { resolveIdentity } from "@server/channels/shared/identity";
+import { clearContext } from "@server/channels/telegram/context";
+import { handleIncoming } from "@server/channels/telegram/handle";
 import { TELEGRAM_BOT_TOKEN } from "@server/lib/env";
+import { deleteUser } from "@server/users/service";
 import { Bot, type Context, type Filter, InputFile } from "grammy";
 import type { MessageEntity } from "grammy/types";
 import { extractLinks, extractText, getDocumentProxy } from "unpdf";

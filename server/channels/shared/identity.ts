@@ -18,11 +18,6 @@ export function resolveIdentity({
 	return row?.user_id ?? null;
 }
 
-/** Erase a user account entirely; FK cascades take profile, links and context with it. */
-export function deleteUser(userId: string): void {
-	db.run("DELETE FROM user WHERE id = ?", [userId]);
-}
-
 /** Create a one-shot link token for an unknown channel identity. */
 export function startLink({ channel, channelUserId }: Sender): string {
 	const token = crypto.randomUUID();

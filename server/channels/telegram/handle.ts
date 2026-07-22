@@ -1,12 +1,12 @@
-import { run } from "@server/agents/agent";
-import { loadContext, saveContext } from "@server/chat/context";
-import { deliverMessage } from "@server/chat/deliver";
-import { enforceLimit } from "@server/chat/limit";
+import { deliverMessage } from "@server/channels/shared/deliver";
 import {
 	resolveIdentity,
 	type Sender,
 	startLink,
-} from "@server/identity/service";
+} from "@server/channels/shared/identity";
+import { run } from "@server/channels/telegram/agent";
+import { loadContext, saveContext } from "@server/channels/telegram/context";
+import { enforceLimit } from "@server/channels/telegram/limit";
 import { BETTER_AUTH_URL } from "@server/lib/env";
 import type { ModelMessage } from "ai";
 

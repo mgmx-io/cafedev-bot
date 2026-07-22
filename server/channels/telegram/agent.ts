@@ -1,9 +1,9 @@
 import { propagateAttributes } from "@langfuse/tracing";
 import { systemPrompt } from "@server/agents/prompt";
-import { buildTools } from "@server/agents/tools";
 import { recordUsage } from "@server/agents/usage";
-import { deliverMessage } from "@server/chat/deliver";
-import type { Sender } from "@server/identity/service";
+import { deliverMessage } from "@server/channels/shared/deliver";
+import type { Sender } from "@server/channels/shared/identity";
+import { buildTools } from "@server/channels/telegram/tools";
 import { type ModelMessage, ToolLoopAgent } from "ai";
 
 export async function run(

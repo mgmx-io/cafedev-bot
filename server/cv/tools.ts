@@ -1,16 +1,16 @@
 import { saveArtifact } from "@server/artifacts/store";
-import { deliverDocument } from "@server/chat/deliver";
 import { renderCvPdf } from "@server/cv/render";
 import { cvSchema, styleSchema } from "@server/cv/schema";
-import type { Sender } from "@server/identity/service";
 import { tool } from "ai";
 import { z } from "zod";
 
-/** Render a structured CV to PDF and deliver it as a file on the user's channel. */
-const sendCv = (userId: string, sender: Sender) =>
+type OnCreated = (filename: string, data: Uint8Array) => unknown;
+
+/** Render a structured CV to PDF and persist it as an artifact. */
+const sendCv = (userId: string, onCreated?: OnCreated) =>
 	tool({
 		description:
-			"Render a structured CV to an ATS-safe PDF, persist it, and send it to the user as a file. Load the cv-writing skill before drafting. Returns its artifact id, hash, and page count.",
+			"Render a structured CV to an ATS-safe PDF and persist it. Load the cv-writing skill before drafting. Returns its artifact id, filename, hash, and page count.",
 		inputSchema: z.object({
 			cv: cvSchema,
 			filename: z
@@ -28,16 +28,17 @@ const sendCv = (userId: string, sender: Sender) =>
 				contentType: "application/pdf",
 				data: pdf,
 			});
+			await onCreated?.(filename, pdf);
 			return {
 				artifactId: id,
-				sha256: sha256,
-				delivered: await deliverDocument(sender, filename, pdf),
+				filename,
+				sha256,
 				pages,
 			};
 		},
 	});
 
-/** The cv slice's tools, bound to one user and sender. */
-export const cvTools = (userId: string, sender: Sender) => ({
-	send_cv: sendCv(userId, sender),
+/** The CV slice's tools, bound to one user. */
+export const cvTools = (userId: string, onCreated?: OnCreated) => ({
+	send_cv: sendCv(userId, onCreated),
 });

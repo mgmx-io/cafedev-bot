@@ -1,4 +1,4 @@
-import type { Sender } from "@server/identity/service";
+import type { Sender } from "@server/channels/shared/identity";
 import { db } from "@server/lib/db";
 import type { ModelMessage } from "ai";
 

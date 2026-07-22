@@ -1,14 +1,11 @@
+import { confirmLink } from "@server/channels/shared/identity";
 import { auth } from "@server/lib/auth";
 import { BETTER_AUTH_URL } from "@server/lib/env";
 import { Hono } from "hono";
-import { confirmLink } from "./service";
 
-export const identity = new Hono();
+export const channelLinks = new Hono();
 
-// Better Auth (web login) — default basePath /api/auth
-identity.on(["POST", "GET"], "/auth/*", (c) => auth.handler(c.req.raw));
-
-identity.get("/link/:token", async (c) => {
+channelLinks.get("/link/:token", async (c) => {
 	const session = await auth.api.getSession({ headers: c.req.raw.headers });
 	if (!session) {
 		const { headers, response } = await auth.api.signInSocial({

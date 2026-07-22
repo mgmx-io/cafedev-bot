@@ -1,5 +1,5 @@
-import { registerDelivery } from "@server/chat/deliver";
-import { handleIncoming } from "@server/chat/handle";
+import { registerDelivery } from "@server/channels/shared/deliver";
+import { handleIncoming } from "@server/channels/telegram/handle";
 import { render, Static, Text, useInput, usePaste } from "ink";
 import { Fragment, useRef, useState } from "react";
 

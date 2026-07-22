@@ -4,7 +4,7 @@ import {
 	getThread,
 	listThreads,
 	loadThreadContext,
-} from "@server/chat/threads";
+} from "@server/channels/mobile/threads";
 import { requireAuth } from "@server/lib/auth-guard";
 import { Hono } from "hono";
 import { z } from "zod";

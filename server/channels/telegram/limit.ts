@@ -1,5 +1,5 @@
-import { deliverMessage } from "@server/chat/deliver";
-import type { Sender } from "@server/identity/service";
+import { deliverMessage } from "@server/channels/shared/deliver";
+import type { Sender } from "@server/channels/shared/identity";
 import { db } from "@server/lib/db";
 
 type Tier = {

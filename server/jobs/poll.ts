@@ -1,4 +1,4 @@
-import { deliverMessage } from "@server/chat/deliver";
+import { deliverMessage } from "@server/channels/shared/deliver";
 import { ATS, type AtsName } from "@server/jobs/catalog";
 import { db } from "@server/lib/db";
 import type { Board } from "@shared/jobs";

@@ -2,9 +2,12 @@ import { queryTools } from "@server/agents/query";
 import { researchTools } from "@server/agents/research";
 import { skillsTools } from "@server/agents/skills";
 import { browserTools } from "@server/browser/tools";
-import { deliverProgress } from "@server/chat/deliver";
+import {
+	deliverDocument,
+	deliverProgress,
+} from "@server/channels/shared/deliver";
+import type { Sender } from "@server/channels/shared/identity";
 import { cvTools } from "@server/cv/tools";
-import type { Sender } from "@server/identity/service";
 import { jobsTools } from "@server/jobs/tools";
 import { profileTools } from "@server/profile/tools";
 import type { Tool, ToolSet } from "ai";
@@ -36,7 +39,7 @@ export const buildTools = (userId: string, sender: Sender) =>
 			...profileTools(userId),
 			...jobsTools(userId),
 			...queryTools(userId),
-			...cvTools(userId, sender),
+			...cvTools(userId, deliverDocument.bind(null, sender)),
 			...browserTools(userId),
 		},
 		sender,

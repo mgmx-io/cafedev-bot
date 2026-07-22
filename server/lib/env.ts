@@ -12,6 +12,7 @@ export const DB_PATH = required("DB_PATH");
 export const PORT = Number(required("PORT"));
 export const BETTER_AUTH_SECRET = required("BETTER_AUTH_SECRET");
 export const BETTER_AUTH_URL = required("BETTER_AUTH_URL");
+export const EXPO_APP_SCHEME = optional("EXPO_APP_SCHEME");
 export const GOOGLE_CLIENT_ID = required("GOOGLE_CLIENT_ID");
 export const GOOGLE_CLIENT_SECRET = required("GOOGLE_CLIENT_SECRET");
 export const TELEGRAM_BOT_TOKEN = required("TELEGRAM_BOT_TOKEN");

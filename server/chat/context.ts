@@ -11,7 +11,7 @@ export function loadContext({
 }: Sender): ModelMessage[] {
 	const row = db
 		.query<{ messages: string }, [string, string]>(
-			"SELECT messages FROM conversation_context WHERE channel = ? AND channel_user_id = ?",
+			"SELECT messages FROM channel_context WHERE channel = ? AND channel_user_id = ?",
 		)
 		.get(channel, channelUserId);
 	return row ? JSON.parse(row.messages) : [];
@@ -20,7 +20,7 @@ export function loadContext({
 /** Drop the thread's context so the next message starts fresh. */
 export function clearContext({ channel, channelUserId }: Sender): void {
 	db.run(
-		"DELETE FROM conversation_context WHERE channel = ? AND channel_user_id = ?",
+		"DELETE FROM channel_context WHERE channel = ? AND channel_user_id = ?",
 		[channel, channelUserId],
 	);
 }
@@ -47,7 +47,7 @@ export function saveContext(
 	messages: ModelMessage[],
 ): void {
 	db.run(
-		`INSERT INTO conversation_context (channel, channel_user_id, messages) VALUES (?, ?, ?)
+		`INSERT INTO channel_context (channel, channel_user_id, messages) VALUES (?, ?, ?)
 		 ON CONFLICT (channel, channel_user_id) DO UPDATE SET messages = excluded.messages`,
 		[channel, channelUserId, JSON.stringify(trimToTurns(messages, MAX_TURNS))],
 	);

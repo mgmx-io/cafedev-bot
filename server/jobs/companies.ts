@@ -1,4 +1,4 @@
-import { ATS, type AtsName, detectSource } from "@server/jobs/catalog";
+import { ATS, type AtsBoard, type AtsName } from "@server/jobs/catalog";
 import { db } from "@server/lib/db";
 import type { Board, BoardCheck } from "@shared/jobs";
 
@@ -14,13 +14,13 @@ function upsertBoard(ats: AtsName, slug: string): number {
 	return row.id;
 }
 
-/** Detect and persist the company board for a job or careers-page URL, if the catalog recognizes it. */
-export function resolveBoard(
-	url: string,
-): { id: number; ats: AtsName; slug: string } | undefined {
-	const detected = detectSource(url);
-	if (!detected) return undefined;
-	return { id: upsertBoard(detected.ats, detected.slug), ...detected };
+/** Persist a verified board candidate. */
+export function saveBoard(board: AtsBoard): {
+	id: number;
+	ats: AtsName;
+	slug: string;
+} {
+	return { id: upsertBoard(board.ats, board.slug), ...board };
 }
 
 /** Follow a company's board for a user. Idempotent. */
@@ -58,7 +58,7 @@ export async function checkBoards(userId: string): Promise<BoardCheck> {
 			// ponytail: shared Board types ats as plain string; rows only ever hold catalog names
 			const ats = board.ats as AtsName;
 			try {
-				const postings = await ATS[ats].source(board.slug);
+				const postings = await ATS[ats].source.list(board.slug);
 				boards.push({
 					id: board.id,
 					ats,

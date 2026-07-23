@@ -1,10 +1,7 @@
 import { extractPage } from "@server/browser/extract";
 import { setFit, setStatus, track } from "@server/jobs/applications";
-import {
-	checkBoards,
-	followCompany,
-	resolveBoard,
-} from "@server/jobs/companies";
+import { checkBoards, followCompany, saveBoard } from "@server/jobs/companies";
+import { discoverBoard } from "@server/jobs/discovery";
 import { saveJob } from "@server/jobs/store";
 import { normalizeUrl } from "@server/lib/url";
 import { STATUSES } from "@shared/jobs";
@@ -40,12 +37,9 @@ const followCompanyTool = (userId: string) =>
 		}),
 		execute: async ({ url }) => {
 			const normalized = normalizeUrl(url);
-			let board = resolveBoard(normalized);
-			if (!board) {
-				const page = await extractPage(normalized);
-				board = resolveBoard(page.finalUrl) ?? resolveBoard(page.html);
-			}
-			if (!board) return { error: "No known ATS board at that URL." };
+			const candidate = await discoverBoard(normalized);
+			if (!candidate) return { error: "No working ATS board at that URL." };
+			const board = saveBoard(candidate);
 			followCompany(userId, board.id);
 			return { ok: true, ats: board.ats, slug: board.slug };
 		},

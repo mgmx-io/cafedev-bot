@@ -20,7 +20,7 @@ const insertPosting = db.query(
 
 /** Scrape one board and upsert its listing; new rows land unnotified. */
 async function sweep(board: Board): Promise<void> {
-	const postings = await ATS[board.ats as AtsName].source(board.slug);
+	const postings = await ATS[board.ats as AtsName].source.list(board.slug);
 	// a board's first sweep seeds pre-stamped — never notifies the backlog
 	const seed = !db
 		.query<{ id: number }, [number]>(

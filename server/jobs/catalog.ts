@@ -5,7 +5,35 @@ import {
 	type Source,
 } from "@server/jobs/source";
 
-export type Ats = { match: RegExp[]; source: Source };
+export type DiscoveryInput = { text: string; origin: string };
+export type Discover = (input: DiscoveryInput) => string[];
+export type Ats = { discover: Discover; source: Source };
+
+function slugsFrom(text: string, patterns: RegExp[]): string[] {
+	return patterns.flatMap((pattern) => {
+		const flags = pattern.flags.includes("g")
+			? pattern.flags
+			: `${pattern.flags}g`;
+		return [...text.matchAll(new RegExp(pattern.source, flags))]
+			.map((match) => match.slice(1).filter(Boolean).join("/"))
+			.filter(Boolean);
+	});
+}
+
+const fromUrls =
+	(...patterns: RegExp[]): Discover =>
+	({ text }) =>
+		slugsFrom(text, patterns);
+
+const fromOrigin =
+	(evidence: RegExp, path: string): Discover =>
+	({ text, origin }) =>
+		evidence.test(text) ? [new URL(path, origin).toString()] : [];
+
+const combine =
+	(...detectors: Discover[]): Discover =>
+	(input) =>
+		detectors.flatMap((detect) => detect(input));
 
 // Workday slugs are composite: "tenant/dc/site". Parse in one place.
 const wd = (slug: string) => {
@@ -21,11 +49,11 @@ const wd = (slug: string) => {
 export const ATS = {
 	// ─── jsonSource: single GET returning an array ───────────────────────────
 	greenhouse: {
-		match: [
+		discover: fromUrls(
 			/greenhouse\.io\/embed\/job_board\?(?:[^"'\s]*&)?for=([\w-]+)/i,
 			/boards-api\.greenhouse\.io\/v1\/boards\/([\w-]+)/i,
 			/(?:boards|job-boards)\.(?:eu\.)?greenhouse\.io\/([\w-]+)/i,
-		],
+		),
 		source: jsonSource({
 			url: (slug) =>
 				`https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true`,
@@ -39,10 +67,10 @@ export const ATS = {
 	},
 
 	lever: {
-		match: [
+		discover: fromUrls(
 			/jobs\.lever\.co\/([\w-]+)/i,
 			/api\.lever\.co\/v0\/postings\/([\w-]+)/i,
-		],
+		),
 		source: jsonSource({
 			url: (slug) => `https://api.lever.co/v0/postings/${slug}?mode=json`,
 			select: (r) => r,
@@ -55,10 +83,10 @@ export const ATS = {
 	},
 
 	ashby: {
-		match: [
+		discover: fromUrls(
 			/jobs\.ashbyhq\.com\/([\w-]+)/i,
 			/api\.ashbyhq\.com\/posting-api\/job-board\/([\w-]+)/i,
-		],
+		),
 		source: jsonSource({
 			url: (slug) => `https://api.ashbyhq.com/posting-api/job-board/${slug}`,
 			select: (r) => r.jobs,
@@ -71,7 +99,7 @@ export const ATS = {
 	},
 
 	workable: {
-		match: [/apply\.workable\.com\/([\w-]+)/i],
+		discover: fromUrls(/apply\.workable\.com\/([\w-]+)/i),
 		source: jsonSource({
 			url: (slug) =>
 				`https://apply.workable.com/api/v1/widget/accounts/${slug}?details=true`,
@@ -85,7 +113,7 @@ export const ATS = {
 	},
 
 	recruitee: {
-		match: [/([\w-]+)\.recruitee\.com/i],
+		discover: fromUrls(/([\w-]+)\.recruitee\.com/i),
 		source: jsonSource({
 			url: (slug) => `https://${slug}.recruitee.com/api/offers/`,
 			select: (r) => r.offers,
@@ -98,7 +126,7 @@ export const ATS = {
 	},
 
 	breezy: {
-		match: [/([\w-]+)\.breezy\.hr/i],
+		discover: fromUrls(/([\w-]+)\.breezy\.hr/i),
 		source: jsonSource({
 			url: (slug) => `https://${slug}.breezy.hr/json?verbose=true`,
 			select: (r) => r,
@@ -111,7 +139,12 @@ export const ATS = {
 	},
 
 	teamtailor: {
-		match: [/([\w-]+(?:\.[a-z]{2})?)\.teamtailor\.com/i],
+		discover: combine(
+			fromUrls(
+				/https?:\/\/((?!(?:app|www)\.)[\w-]+(?:\.[a-z]{2})?)\.teamtailor\.com/i,
+			),
+			fromOrigin(/teamtailor-cdn\.com/i, "/jobs.json"),
+		),
 		source: jsonSource({
 			url: (slug) => `https://${slug}.teamtailor.com/jobs.json`,
 			select: (r) => r.items,
@@ -124,7 +157,7 @@ export const ATS = {
 	},
 
 	bamboohr: {
-		match: [/([\w-]+)\.bamboohr\.com/i],
+		discover: fromUrls(/([\w-]+)\.bamboohr\.com/i),
 		source: jsonSource({
 			url: (slug) => `https://${slug}.bamboohr.com/careers/list`,
 			select: (r) => r.result,
@@ -138,11 +171,11 @@ export const ATS = {
 
 	// ─── pagedSource: cursor pagination (start/step) ─────────────────────────
 	smartrecruiters: {
-		match: [
+		discover: fromUrls(
 			/careers\.smartrecruiters\.com\/([\w-]+)/i,
 			/api\.smartrecruiters\.com\/v1\/companies\/([\w-]+)/i,
 			/jobs\.smartrecruiters\.com\/(?:oneclick-ui\/company\/)?([\w-]+)/i,
-		],
+		),
 		source: pagedSource({
 			request: (slug, offset) => ({
 				url: `https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100&offset=${offset}&country=ar`,
@@ -160,10 +193,10 @@ export const ATS = {
 	},
 
 	workday: {
-		match: [
+		discover: fromUrls(
 			/([\w-]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:[a-z]{2}-[a-z]{2}\/)?([\w-]+)/i,
 			/([\w-]+)\.(wd\d+)\.myworkdayjobs\.com\/[\w-]+\/([\w-]+)/i,
-		],
+		),
 		source: pagedSource({
 			request: (slug, offset) => {
 				const { tenant, site, base } = wd(slug);
@@ -196,7 +229,7 @@ export const ATS = {
 	},
 
 	getonbrd: {
-		match: [/getonbrd\.com\/companies\/([\w-]+)/i],
+		discover: fromUrls(/getonbrd\.com\/companies\/([\w-]+)/i),
 		source: pagedSource({
 			request: (slug, page) => ({
 				url: `https://www.getonbrd.com/api/v0/companies/${slug}/jobs?per_page=120&page=${page}`,
@@ -215,7 +248,7 @@ export const ATS = {
 
 	// ─── htmlSource: scrape listing page with a regex ────────────────────────
 	hiringroom: {
-		match: [/([\w-]+)\.hiringroom\.com/i],
+		discover: fromUrls(/([\w-]+)\.hiringroom\.com/i),
 		source: htmlSource({
 			url: (slug) => `https://${slug}.hiringroom.com/jobs`,
 			item: /\/jobs\/get_vacancy\/([a-f0-9]{24})"[\s\S]*?name__vacancy">\s*([^<]+?)\s*<\/h4>/g,
@@ -228,7 +261,7 @@ export const ATS = {
 	},
 
 	peopleforce: {
-		match: [/([\w-]+)\.peopleforce\.io/i],
+		discover: fromUrls(/([\w-]+)\.peopleforce\.io/i),
 		source: htmlSource({
 			url: (slug) => `https://${slug}.peopleforce.io/careers`,
 			item: /\/careers\/v\/(\d+)-([^"#?]+)"/g,
@@ -242,17 +275,19 @@ export const ATS = {
 } satisfies Record<string, Ats>;
 
 export type AtsName = keyof typeof ATS;
+export type AtsBoard = { ats: AtsName; slug: string };
 
-/** Detect the ATS + canonical slug for a pasted job URL, if it matches the catalog. */
-export function detectSource(
-	url: string,
-): { ats: AtsName; slug: string } | null {
+/** Detect every ATS board referenced by the supplied evidence. */
+export function detectSources(input: DiscoveryInput): AtsBoard[] {
+	const boards: AtsBoard[] = [];
+	const seen = new Set<string>();
 	for (const [ats, def] of Object.entries(ATS)) {
-		for (const re of def.match) {
-			const m = url.match(re);
-			const slug = m?.slice(1).filter(Boolean).join("/");
-			if (slug) return { ats: ats as AtsName, slug };
+		for (const slug of def.discover(input)) {
+			const key = `${ats}:${slug}`;
+			if (seen.has(key)) continue;
+			seen.add(key);
+			boards.push({ ats: ats as AtsName, slug });
 		}
 	}
-	return null;
+	return boards;
 }

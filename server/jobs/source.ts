@@ -4,7 +4,10 @@ export type Posting = { id: string; url: string; title: string };
 
 export type AtsRequest = { url: string; init: RequestInit };
 
-export type Source = (slug: string) => Promise<Posting[]>;
+export type Source = {
+	list: (slug: string) => Promise<Posting[]>;
+	probe: (slug: string) => Promise<boolean>;
+};
 
 // biome-ignore lint/suspicious/noExplicitAny: ATS responses have no static shape
 type Payload = any;
@@ -26,7 +29,7 @@ function okOr404(res: Response, slug: string): boolean {
 }
 
 // turns item-pages into deduped Postings; each factory below = a `pages` generator + a `map`
-function source(map: Map, pages: Pages): Source {
+function listSource(map: Map, pages: Pages): Source["list"] {
 	return async (slug) => {
 		const seen = new Set<string>();
 		const out: Posting[] = [];
@@ -50,12 +53,20 @@ export function jsonSource(shape: {
 	select: (res: Payload) => unknown[];
 	map: Map;
 }): Source {
-	return source(shape.map, async function* (slug) {
-		const res = await request(resolveUrl(slug, shape.url));
-		if (!okOr404(res, slug)) return;
-		const items = shape.select(await res.json());
-		if (Array.isArray(items)) yield items;
-	});
+	const url = (slug: string) => resolveUrl(slug, shape.url);
+	return {
+		list: listSource(shape.map, async function* (slug) {
+			const res = await request(url(slug));
+			if (!okOr404(res, slug)) return;
+			const items = shape.select(await res.json());
+			if (Array.isArray(items)) yield items;
+		}),
+		async probe(slug) {
+			const res = await request(url(slug));
+			if (!okOr404(res, slug)) return false;
+			return Array.isArray(shape.select(await res.json()));
+		},
+	};
 }
 
 export function htmlSource(shape: {
@@ -63,11 +74,19 @@ export function htmlSource(shape: {
 	item: RegExp;
 	map: (m: RegExpMatchArray, slug: string) => Extracted;
 }): Source {
-	return source(shape.map, async function* (slug) {
-		const res = await request(resolveUrl(slug, shape.url));
-		if (!okOr404(res, slug)) return;
-		yield [...(await res.text()).matchAll(shape.item)];
-	});
+	const url = (slug: string) => resolveUrl(slug, shape.url);
+	return {
+		list: listSource(shape.map, async function* (slug) {
+			const res = await request(url(slug));
+			if (!okOr404(res, slug)) return;
+			yield [...(await res.text()).matchAll(shape.item)];
+		}),
+		async probe(slug) {
+			const res = await request(url(slug));
+			if (!okOr404(res, slug)) return false;
+			return [...(await res.text()).matchAll(shape.item)].length > 0;
+		},
+	};
 }
 
 // cursor pagination; `start`/`step` fit offset- and page-based APIs, stops on first empty page
@@ -78,15 +97,23 @@ export function pagedSource(shape: {
 	select: (res: Payload) => unknown[];
 	map: Map;
 }): Source {
-	return source(shape.map, async function* (slug) {
-		for (let cursor = shape.start; ; cursor += shape.step) {
-			const { url, init } = shape.request(slug, cursor);
+	return {
+		list: listSource(shape.map, async function* (slug) {
+			for (let cursor = shape.start; ; cursor += shape.step) {
+				const { url, init } = shape.request(slug, cursor);
+				const res = await request(url, init);
+				if (cursor === shape.start && !okOr404(res, slug)) return;
+				if (!res.ok) return;
+				const items = shape.select(await res.json());
+				if (!items?.length) return;
+				yield items;
+			}
+		}),
+		async probe(slug) {
+			const { url, init } = shape.request(slug, shape.start);
 			const res = await request(url, init);
-			if (cursor === shape.start && !okOr404(res, slug)) return;
-			if (!res.ok) return;
-			const items = shape.select(await res.json());
-			if (!items?.length) return;
-			yield items;
-		}
-	});
+			if (!okOr404(res, slug)) return false;
+			return Array.isArray(shape.select(await res.json()));
+		},
+	};
 }

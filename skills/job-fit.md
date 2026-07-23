@@ -14,7 +14,7 @@ Rank how well a saved job posting fits the user. Fit is two matches, not one:
 
 ## Gather
 
-1. **The JD.** Fetch the full description with `query_db`: `SELECT title,
+1. **The JD.** Fetch the full description with `query_db`: `SELECT url, title,
    content FROM job_postings WHERE id = ?` (you got the id from `ingest_job`
    earlier this conversation, or re-ingest the link to get it).
 2. **The profile.** The injected index lists what you know about the user. Pick
@@ -22,16 +22,25 @@ Rank how well a saved job posting fits the user. Fit is two matches, not one:
    summary, content FROM profile_notes WHERE id IN (...)`.
    If the profile is thin, say so — a fit ranking on no evidence is a guess.
 
+## Eligibility gate
+
+Check explicit categorical conditions before ranking: work authorization or
+sponsorship, security clearance, mandatory licenses, and fixed location. Compare
+them with the profile. Proceed when eligible, return **Skip** with the posting's
+exact condition when ineligible, and ask when an unknown could change the
+verdict.
+
 ## Analyze
 
 1. **Role shape.** In one line: seniority, function (build / consult / manage /
    deploy), domain, remote (full / hybrid / onsite). Name the 1-2 things the
    role is really about.
-2. **Capability — can they do it?** Map each real requirement (what the role
-   *needs*) to the user's evidence (what they *are*):
+2. **Capability — can they do it?** Separate must-have from preferred
+   requirements, then map each to the user's evidence:
    - **covered** — a profile note backs it (cite the note id)
    - **partial** — adjacent or weaker evidence
-   - **gap** — nothing in the profile supports it
+   - **unknown** — the profile does not establish whether they have it
+   - **gap** — the profile establishes that they do not meet it
    Judge what the JD *requires*, not its boilerplate.
 3. **Desirability — do they want it?** Map what the role *offers* (comp, remote,
    stack, scope, mission, growth) to what the user *wants* (cite the note id):
@@ -41,9 +50,10 @@ Rank how well a saved job posting fits the user. Fit is two matches, not one:
    If the JD doesn't state something the user cares about (e.g. no comp listed),
    mark it unknown — don't assume.
 4. **Gaps and interactions.** For each capability gap: hard blocker or
-   nice-to-have? adjacent experience to lean on? And does the user *want* to grow
-   there — a gap they want to close is a growth angle, not a disqualifier. A
-   strong capability match they *don't* want is misalignment; don't oversell it.
+   nice-to-have? adjacent experience to lean on? Ask about an unknown must-have
+   when it could change the verdict. And does the user *want* to grow there — a
+   gap they want to close is a growth angle, not a disqualifier. A strong
+   capability match they *don't* want is misalignment; don't oversell it.
 
 ## Verdict
 
@@ -52,8 +62,9 @@ grounded in the two mappings and which gaps are blockers:
 
 - **Apply** — covers the must-have requirements AND the offer fits what the user
   wants.
-- **Stretch** — gaps or a soft blocker on either axis, but adjacent evidence or a
-  growth the user wants makes a tailored shot worth it. Say what to address.
+- **Stretch** — gaps, material unknowns, or a soft blocker on either axis, but
+  adjacent evidence or a growth the user wants makes a tailored shot worth it.
+  Say what to address.
 - **Skip** — a hard capability blocker (a missing must-have with no path), OR a
   deal-breaker conflict with what the user wants.
 
@@ -66,8 +77,8 @@ seniority, unrealistic asks) pull the verdict down.
 Give it in the message:
 
 - One-line role shape + the **verdict** (Apply / Stretch / Skip)
-- **Capability**: one line per real requirement — ✅ covered / ⚠️ partial / 🔴 gap,
-  with the evidence. Never a table.
+- **Capability**: one line per real requirement — ✅ covered / ⚠️ partial / ❓
+  unknown / 🔴 gap, with the evidence. Never a table.
 - **Desirability**: same, one line per offer-vs-want — ✅ met / ⚠️ partial / 🔴
   missing or conflict.
 - Top 2-3 gaps or conflicts with mitigation

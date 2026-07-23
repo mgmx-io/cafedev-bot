@@ -11,7 +11,8 @@ import { z } from "zod";
 /** Fetch a pasted job posting, save it, and start tracking it for the user. */
 const ingestJob = (userId: string) =>
 	tool({
-		description: "Ingest the job posting at the URL the user pasted.",
+		description:
+			"Fetch and save the job posting at a user-provided URL, then track it as considering. Re-ingesting the same URL refreshes the saved posting and returns the same job id.",
 		inputSchema: z.object({
 			url: z.url().describe("The job-posting URL the user pasted."),
 		}),
@@ -73,7 +74,7 @@ const recordFit = (userId: string) =>
 const setJobStatus = (userId: string) =>
 	tool({
 		description:
-			"Set a job's lifecycle status — e.g. when the user applies, lands an interview, or gets an offer. Starts tracking the job if it wasn't already.",
+			"Set a job's application lifecycle status when it moves from considering to applied, interviewing, offer, rejected, or withdrawn. Use record_fit for fit assessments. Starts tracking the job if needed.",
 		inputSchema: z.object({
 			job_id: z.number().int().positive(),
 			status: z.enum(STATUSES),
